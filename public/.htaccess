@@ -1,0 +1,23 @@
+# White Knight Roadside — Admin
+DirectoryIndex index.php
+Options -Indexes
+
+# The project root's .htaccess denies everything, and Apache applies a parent
+# folder's rules to every folder beneath it. This is the ONE folder meant to
+# be served, so it re-opens access here — the deepest rule wins.
+Require all granted
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+  # Serve real files and directories directly (CSS, JS, uploaded photos).
+  RewriteCond %{REQUEST_FILENAME} -f [OR]
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule ^ - [L]
+  # Everything else goes through the front controller.
+  RewriteRule ^ index.php [QSA,L]
+</IfModule>
+
+<FilesMatch "\.(sqlite|sqlite-wal|sqlite-shm|env|log)$">
+  Require all denied
+</FilesMatch>

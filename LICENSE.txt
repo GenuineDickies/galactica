@@ -1,0 +1,39 @@
+WHITE KNIGHT ROADSIDE, LLC — PROPRIETARY SOFTWARE LICENSE
+Copyright © 2026 White Knight Roadside, LLC. All Rights Reserved.
+
+THIS SOFTWARE IS LICENSED, NOT SOLD.
+
+1. OWNERSHIP. This software, including all source code, object code,
+   database schemas, documentation, designs, and associated materials
+   (the "Software"), is the exclusive property of White Knight
+   Roadside, LLC ("WKR") and is protected by United States copyright
+   law (17 U.S.C. § 101 et seq.) and international treaties.
+
+2. NO LICENSE GRANTED. No right or license, express or implied, is
+   granted to any person or entity except by a separate written
+   agreement signed by an authorized officer of WKR. Possession of or
+   access to the Software grants no rights whatsoever.
+
+3. PROHIBITED ACTS. Without WKR's prior written consent, you may NOT:
+   copy, reproduce, modify, adapt, translate, or create derivative
+   works of the Software; distribute, publish, sublicense, sell, rent,
+   lease, or lend the Software; host, operate, or make the Software
+   available to any third party; reverse-engineer, decompile,
+   disassemble, or otherwise attempt to derive the source code of any
+   compiled or obfuscated portion; or remove or alter any copyright,
+   trademark, or proprietary notice.
+
+4. TERMINATION. Any breach of this license terminates all permissions
+   automatically and immediately, without notice.
+
+5. ENFORCEMENT. Unauthorized use, copying, or distribution of the
+   Software constitutes copyright infringement under 17 U.S.C.
+   §§ 501–505 and will be prosecuted to the fullest extent of the law,
+   including claims for statutory damages of up to $150,000 per act of
+   willful infringement, actual damages, profits, and attorneys' fees.
+
+6. NO WARRANTY. The Software is provided "AS IS" without warranty of
+   any kind. WKR disclaims all warranties, express or implied,
+   including merchantability and fitness for a particular purpose.
+
+Licensing inquiries: licensing@wkrllc.com

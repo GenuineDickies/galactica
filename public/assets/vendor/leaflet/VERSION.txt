@@ -1,0 +1,3 @@
+leaflet 1.9.4 · BSD-2-Clause · vendored 2026-08-08 · source: npm leaflet@1.9.4 dist/
+Only leaflet.js, leaflet.css and dist/images are used. No source maps, no ESM
+build: this app has no bundler and loads the file as-is.

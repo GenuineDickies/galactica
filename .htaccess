@@ -1,0 +1,2 @@
+# Nothing above public/ is ever web-servable.
+Require all denied
