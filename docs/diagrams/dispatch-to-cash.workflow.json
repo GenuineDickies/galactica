@@ -1,0 +1,303 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Dispatch-to-Cash Chain",
+    "output": "docs/diagrams/dispatch-to-cash.html",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "quote",
+        "label": "Request to authorized estimate",
+        "focus": [
+          "request",
+          "estimate",
+          "authorize"
+        ],
+        "note": "The Estimate is the quote. Nothing is priced twice; lines snapshot cost and markup at authorization."
+      },
+      {
+        "id": "work",
+        "label": "Work order to invoice",
+        "focus": [
+          "authorize",
+          "work_order",
+          "invoice"
+        ],
+        "note": "Lines promote EST \u2192 WO \u2192 INV inside one doc_lines table; editing the markup matrix never changes an issued document."
+      },
+      {
+        "id": "cash",
+        "label": "Payment, receipt, ledger",
+        "focus": [
+          "invoice",
+          "payment",
+          "receipt",
+          "ledger"
+        ],
+        "note": "Every payment posts a balanced journal entry; the receipt is the customer-facing echo of that posting."
+      },
+      {
+        "id": "exceptions",
+        "label": "Voids and supersedes",
+        "focus": [
+          "estimate",
+          "superseded",
+          "invoice",
+          "void_credit"
+        ],
+        "note": "Nothing is deleted. A replaced estimate is superseded; a wrong invoice is voided or credited and re-issued."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "customer",
+      "label": "Customer"
+    },
+    {
+      "id": "dispatch",
+      "label": "Dispatch"
+    },
+    {
+      "id": "tech",
+      "label": "Technician"
+    },
+    {
+      "id": "billing",
+      "label": "Billing"
+    },
+    {
+      "id": "books",
+      "label": "Books (GL)"
+    },
+    {
+      "id": "exceptions",
+      "label": "Void / Supersede",
+      "variant": "exception"
+    }
+  ],
+  "phases": [
+    {
+      "id": "intake",
+      "label": "Intake",
+      "fromCol": 0,
+      "toCol": 1
+    },
+    {
+      "id": "service",
+      "label": "Authorize + perform",
+      "fromCol": 2,
+      "toCol": 3,
+      "variant": "emphasis"
+    },
+    {
+      "id": "cash",
+      "label": "Bill + collect",
+      "fromCol": 4,
+      "toCol": 5,
+      "variant": "dashed"
+    }
+  ],
+  "groups": [
+    {
+      "id": "doc_lines",
+      "label": "One doc_lines table (EST / WO / INV)",
+      "lane": "dispatch",
+      "fromCol": 1,
+      "toCol": 4,
+      "variant": "emphasis"
+    }
+  ],
+  "mainPath": [
+    "request",
+    "estimate",
+    "authorize",
+    "work_order",
+    "invoice",
+    "payment",
+    "ledger"
+  ],
+  "nodes": [
+    {
+      "id": "request",
+      "lane": "customer",
+      "col": 0,
+      "type": "frontend",
+      "label": "Request",
+      "sublabel": "call / text / web"
+    },
+    {
+      "id": "estimate",
+      "lane": "dispatch",
+      "col": 1,
+      "type": "backend",
+      "label": "Estimate",
+      "sublabel": "the quote",
+      "tag": "EST"
+    },
+    {
+      "id": "authorize",
+      "lane": "customer",
+      "col": 2,
+      "type": "security",
+      "label": "Authorize",
+      "sublabel": "customer approves",
+      "tag": "human gate"
+    },
+    {
+      "id": "work_order",
+      "lane": "tech",
+      "col": 3,
+      "type": "backend",
+      "label": "Work Order",
+      "sublabel": "en route \u2192 complete",
+      "tag": "WO"
+    },
+    {
+      "id": "invoice",
+      "lane": "billing",
+      "col": 4,
+      "type": "backend",
+      "label": "Invoice",
+      "sublabel": "per-line tax",
+      "tag": "INV"
+    },
+    {
+      "id": "payment",
+      "lane": "billing",
+      "col": 5,
+      "type": "cloud",
+      "label": "Payment",
+      "sublabel": "Square / manual"
+    },
+    {
+      "id": "receipt",
+      "lane": "customer",
+      "col": 5,
+      "type": "frontend",
+      "label": "Receipt",
+      "sublabel": "price only, no cost"
+    },
+    {
+      "id": "ledger",
+      "lane": "books",
+      "col": 5,
+      "type": "database",
+      "label": "Journal Entry",
+      "sublabel": "accrual, balanced",
+      "tag": "append-only"
+    },
+    {
+      "id": "superseded",
+      "lane": "exceptions",
+      "col": 2,
+      "type": "security",
+      "label": "Supersede",
+      "sublabel": "replaced estimate"
+    },
+    {
+      "id": "void_credit",
+      "lane": "exceptions",
+      "col": 4,
+      "type": "security",
+      "label": "Void / Credit",
+      "sublabel": "never delete"
+    }
+  ],
+  "edges": [
+    {
+      "from": "request",
+      "to": "estimate",
+      "label": "price lines"
+    },
+    {
+      "from": "estimate",
+      "to": "authorize",
+      "variant": "emphasis"
+    },
+    {
+      "from": "authorize",
+      "to": "work_order",
+      "label": "approved",
+      "variant": "emphasis"
+    },
+    {
+      "from": "work_order",
+      "to": "invoice",
+      "label": "lines promote"
+    },
+    {
+      "from": "invoice",
+      "to": "payment",
+      "variant": "emphasis"
+    },
+    {
+      "from": "payment",
+      "to": "receipt",
+      "label": "customer copy"
+    },
+    {
+      "from": "payment",
+      "to": "ledger",
+      "label": "post"
+    },
+    {
+      "from": "estimate",
+      "to": "superseded",
+      "label": "revised",
+      "variant": "dashed",
+      "role": "error"
+    },
+    {
+      "from": "superseded",
+      "to": "estimate",
+      "label": "new EST",
+      "variant": "dashed",
+      "role": "return"
+    },
+    {
+      "from": "invoice",
+      "to": "void_credit",
+      "label": "wrong",
+      "variant": "security",
+      "role": "error"
+    },
+    {
+      "from": "void_credit",
+      "to": "ledger",
+      "label": "reversing entry",
+      "variant": "dashed",
+      "role": "return"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "One Chain",
+      "items": [
+        "Estimate is the quote \u2014 no separate quote entity",
+        "Lines live once in doc_lines and promote EST \u2192 WO \u2192 INV",
+        "Authorization is the only human gate before work"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Nothing Deleted",
+      "items": [
+        "Estimates are superseded, never edited after authorization",
+        "Invoices are voided or credited, then re-issued",
+        "audit_log and api_log are append-only"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Money Rules",
+      "items": [
+        "Cost, markup % and price snapshot onto each line",
+        "Tax is per line, never subtotal \u00d7 rate",
+        "Customer documents show price only; internal views show margin"
+      ]
+    }
+  ]
+}

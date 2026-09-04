@@ -1221,22 +1221,17 @@ final class MessageController
         $hits = 0;
 
         if ($cust) {
+            // optOut() also clears intake consent on the customer's open
+            // requests — the same routine the texted STOP uses.
             $action === 'stop'
                 ? Consent::optOut($cust, 'revoked_verbal', $how)
                 : Consent::optIn($cust, 'granted_verbal', $how);
             $hits++;
-        }
-
-        // A stranded caller may exist only as a service request — intake
-        // consent lives on the request until a customer record does. A verbal
-        // stop covers those too; compliance does not wait for promotion.
-        if ($action === 'stop') {
-            foreach (Db::all(
-                "SELECT * FROM service_requests WHERE reported_phone = ? AND comms_consent = 1", [$phone]) as $sr) {
-                Db::update('service_requests', (int) $sr['id'], ['comms_consent' => 0, 'updated_at' => now()]);
-                Audit::log('service_request', (int) $sr['id'], 'sms:opted_out', $how);
-                $hits++;
-            }
+        } elseif ($action === 'stop') {
+            // A stranded caller may exist only as a service request — intake
+            // consent lives on the request until a customer record does. A
+            // verbal stop covers those too; compliance does not wait for promotion.
+            $hits += Consent::revokeRequests($phone, $how);
         }
 
         if ($hits === 0) {

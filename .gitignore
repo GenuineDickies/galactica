@@ -17,3 +17,6 @@ public/storage/
 .idea/
 Thumbs.db
 .DS_Store
+
+# Design-time tooling, not part of the app. Reinstall: git clone --depth 1 https://github.com/tt-a1i/archify /tmp/a && cp -r /tmp/a/archify tools/archify
+tools/archify/

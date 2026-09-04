@@ -64,9 +64,19 @@ final class TelnyxSmsGateway implements SmsGateway
 {
     private const API = 'https://api.telnyx.com/v2/messages';
 
-    /** Anything in this list opts the sender out. Required by the carriers. */
-    private const STOP  = ['STOP', 'STOPALL', 'UNSUBSCRIBE', 'CANCEL', 'END', 'QUIT', 'REVOKE', 'OPTOUT'];
-    private const START = ['START', 'UNSTOP', 'YES', 'SUBSCRIBE', 'OPTIN'];
+    /**
+     * Anything in this list opts the sender out. Required by the carriers.
+     *
+     * The FCC's per-se revocation list is "stop, quit, end, revoke, opt out,
+     * cancel, unsubscribe" — and "opt out" is two words. keyword() therefore
+     * matches the leading PHRASE of the message against these lists, so
+     * multi-word entries belong here as written. The single-word collapsed
+     * forms (OPTOUT, STOPALL) stay for people who type them that way.
+     * See docs/10DLC_COMPLIANCE_AUDIT.md P1-C.
+     */
+    private const STOP  = ['STOP', 'STOP ALL', 'STOPALL', 'UNSUBSCRIBE', 'CANCEL', 'CANCEL SUBSCRIPTION',
+                           'END', 'QUIT', 'REVOKE', 'OPT OUT', 'OPTOUT'];
+    private const START = ['START', 'UNSTOP', 'YES', 'SUBSCRIBE', 'OPT IN', 'OPTIN'];
     private const HELP  = ['HELP', 'INFO'];
 
     public function __construct(
@@ -243,13 +253,29 @@ final class TelnyxSmsGateway implements SmsGateway
     }
 
     /** @return string one of 'stop' | 'start' | 'help' | '' */
+    /**
+     * Which compliance keyword, if any, a reply leads with.
+     *
+     * Punctuation becomes a space (so "OPT-OUT" reads as "OPT OUT"), runs of
+     * whitespace collapse, and the first TWO words are tried as a phrase
+     * before the first word alone — longest match wins, so "STOP ALL" is not
+     * mistaken for a bare STOP with trailing chatter, and "opt out" is
+     * honoured at all (it used to fall through as the unknown word "OPT").
+     * Leading-word matching is deliberate: "STOP texting me" is a stop.
+     */
     public static function keyword(string $text): string
     {
-        $word = strtoupper(trim(preg_replace('/[^A-Za-z ]/', '', $text) ?? ''));
-        $word = explode(' ', $word)[0] ?? '';
-        if (in_array($word, self::STOP, true))  { return 'stop'; }
-        if (in_array($word, self::START, true)) { return 'start'; }
-        if (in_array($word, self::HELP, true))  { return 'help'; }
+        $norm  = strtoupper(trim(preg_replace('/\s+/', ' ', preg_replace('/[^A-Za-z]+/', ' ', $text) ?? '') ?? ''));
+        if ($norm === '') { return ''; }
+        $words = explode(' ', $norm);
+        $tries = [];
+        if (count($words) >= 2) { $tries[] = $words[0] . ' ' . $words[1]; }
+        $tries[] = $words[0];
+        foreach ($tries as $w) {
+            if (in_array($w, self::STOP, true))  { return 'stop'; }
+            if (in_array($w, self::START, true)) { return 'start'; }
+            if (in_array($w, self::HELP, true))  { return 'help'; }
+        }
         return '';
     }
 

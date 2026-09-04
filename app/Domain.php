@@ -1359,7 +1359,15 @@ final class Health
  */
 final class Consent
 {
-    /** Revoke. $how is the evidence line: quoted text, or who-heard-what. */
+    /**
+     * Revoke. $how is the evidence line: quoted text, or who-heard-what.
+     *
+     * Revocation is honoured across everything this sender might text, not
+     * per record. The customer row is one gate; the open service request's
+     * intake consent is the other (Sms::queueForRequest reads it), so a STOP
+     * clears both. Before 2026-09-04 only the verbal path did the second
+     * half and a texted STOP left the request live — 10DLC audit P1-A.
+     */
     public static function optOut(array $cust, string $source, string $how): void
     {
         Db::update('customers', (int) $cust['id'], [
@@ -1369,6 +1377,33 @@ final class Consent
             'updated_at'         => now(),
         ]);
         Audit::log('customer', (int) $cust['id'], 'sms:opted_out', $how);
+        self::revokeRequests((string) ($cust['phone_e164'] ?? ''), $how);
+    }
+
+    /**
+     * Zero intake consent on every open service request carrying $phone.
+     *
+     * A stranded caller may exist only as a service request — intake consent
+     * lives on the request until a customer record does — so this must work
+     * with no customer row at all (10DLC audit P1-B). reported_phone is
+     * stored as typed, so candidates are compared after E.164 normalisation
+     * rather than by string equality. Returns how many requests changed.
+     */
+    public static function revokeRequests(string $phone, string $how): int
+    {
+        $e164 = phone_to_e164($phone);
+        if (!$e164) { return 0; }
+        $n = 0;
+        // The last four digits are contiguous in every way a phone gets typed,
+        // so they bound the scan; the exact match happens after normalisation.
+        $tail = '%' . substr($e164, -4);
+        foreach (Db::all("SELECT id, reported_phone FROM service_requests WHERE comms_consent = 1 AND reported_phone LIKE ?", [$tail]) as $sr) {
+            if (phone_to_e164((string) $sr['reported_phone']) !== $e164) { continue; }
+            Db::update('service_requests', (int) $sr['id'], ['comms_consent' => 0, 'updated_at' => now()]);
+            Audit::log('service_request', (int) $sr['id'], 'sms:opted_out', $how);
+            $n++;
+        }
+        return $n;
     }
 
     /** Restore. Only ever from an affirmative act by the customer. */
@@ -1594,6 +1629,19 @@ final class Sms
             $gate = ['ok' => false, 'reason' => 'No SMS consent was recorded at intake. Tick the consent box only if the caller verbally agreed.'];
         } elseif ($phone === '') {
             $gate = ['ok' => false, 'reason' => 'The callback number is not a valid 10-digit phone number.'];
+        } else {
+            // Intake consent is necessary, not sufficient. If a customer record
+            // exists for this number — linked or merely sharing the phone — its
+            // flags are consulted too and the stricter answer wins. Otherwise a
+            // STOP recorded on the customer could be undone by re-ticking the
+            // intake box (10DLC audit P1-A).
+            $cust = $sr['customer_id']
+                ? Db::one('SELECT * FROM customers WHERE id = ?', [(int) $sr['customer_id']])
+                : null;
+            $cust = $cust ?: Db::one('SELECT * FROM customers WHERE phone_e164 = ?', [$phone]);
+            if ($cust && (int) $cust['do_not_contact'] === 1) {
+                $gate = ['ok' => false, 'reason' => 'Customer is marked do-not-contact — they opted out. Intake consent does not override that.'];
+            }
         }
 
         $suspend = $gate['ok'] ? self::complianceStop($body) : '';

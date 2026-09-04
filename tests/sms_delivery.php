@@ -447,6 +447,84 @@ Db::q("DELETE FROM audit_log WHERE entity_type='customer' AND entity_id=?", [$cu
 Db::q("DELETE FROM messages WHERE phone_e164 = '+15035550155'");
 Db::q('DELETE FROM customers WHERE id = ?', [$custId]);
 
+/* ------------------------------------------------------------------ */
+/* 10DLC audit P1-C: the FCC's own revocation words, as people type them */
+/* ------------------------------------------------------------------ */
+section('every FCC revocation keyword is recognised, including two-word ones');
+foreach (['STOP', 'stop', 'Stop.', 'STOP ALL', 'stop all', 'opt out', 'Opt Out', 'OPT-OUT', 'optout',
+          'quit', 'end', 'revoke', 'cancel', 'unsubscribe', 'cancel subscription', 'STOP texting me'] as $t) {
+    check("\"$t\" -> stop", TelnyxSmsGateway::keyword($t), 'stop');
+}
+foreach (['start', 'unstop', 'opt in', 'OPT IN', 'yes'] as $t) {
+    check("\"$t\" -> start", TelnyxSmsGateway::keyword($t), 'start');
+}
+foreach (['help', 'INFO'] as $t) {
+    check("\"$t\" -> help", TelnyxSmsGateway::keyword($t), 'help');
+}
+foreach (['ok thanks', 'please stop by the shop', 'how much', ''] as $t) {
+    check("\"$t\" -> not a keyword", TelnyxSmsGateway::keyword($t), '');
+}
+
+/* ------------------------------------------------------------------ */
+/* 10DLC audit P1-A: a texted STOP must reach the open service request */
+/* ------------------------------------------------------------------ */
+section('inbound STOP from a known customer clears intake consent on their open request');
+$ph = '+15035550166';
+$custId = Db::insert('customers', [
+    'customer_type' => 'INDIVIDUAL', 'first_name' => 'Stop', 'last_name' => 'Test',
+    'phone_e164' => $ph, 'sms_approved' => 1, 'do_not_contact' => 0,
+    'created_at' => now(), 'updated_at' => now(),
+]);
+$cust = Db::one('SELECT * FROM customers WHERE id = ?', [$custId]);
+// Two requests on that number, one typed as the dispatcher might have typed it.
+$srA = Db::insert('service_requests', [
+    'doc_number' => 'TEST-STOP-A', 'reported_name' => 'Stop Test', 'reported_phone' => $ph,
+    'customer_id' => $custId, 'comms_consent' => 1, 'created_at' => now(), 'updated_at' => now(),
+]);
+$srB = Db::insert('service_requests', [
+    'doc_number' => 'TEST-STOP-B', 'reported_name' => 'Stop Test', 'reported_phone' => '(503) 555-0166',
+    'comms_consent' => 1, 'created_at' => now(), 'updated_at' => now(),
+]);
+$before = Sms::queueForRequest(Db::one('SELECT * FROM service_requests WHERE id=?', [$srA]), 'locate', ['{link}' => 'x']);
+check('sanity: request text allowed before STOP', $before['ok'], true);
+
+WebhookController::inboundSms(['from' => $ph, 'text' => 'STOP', 'reference' => 'test-stop-1'], $gw);
+$c = Db::one('SELECT * FROM customers WHERE id = ?', [$custId]);
+check('customer do-not-contact set',            (int) $c['do_not_contact'], 1);
+check('request A consent cleared',              (int) Db::val('SELECT comms_consent FROM service_requests WHERE id=?', [$srA]), 0);
+check('request B (formatted phone) cleared',    (int) Db::val('SELECT comms_consent FROM service_requests WHERE id=?', [$srB]), 0);
+check('request audit row written',              (int) Db::val("SELECT COUNT(*) FROM audit_log WHERE entity_type='service_request' AND entity_id=? AND action='sms:opted_out'", [$srA]), 1);
+
+section('after STOP, queueForRequest is blocked even if intake consent were re-ticked');
+Db::update('service_requests', $srA, ['comms_consent' => 1]);
+$after = Sms::queueForRequest(Db::one('SELECT * FROM service_requests WHERE id=?', [$srA]), 'locate', ['{link}' => 'x']);
+check('blocked by the customer gate',           $after['ok'], false);
+check('reason names do-not-contact',            str_contains($after['reason'], 'do-not-contact'), true);
+$row = Db::one("SELECT * FROM messages WHERE service_request_id = ? ORDER BY id DESC LIMIT 1", [$srA]);
+check('attempt recorded as BLOCKED',            $row['status'] ?? null, 'BLOCKED');
+
+/* ------------------------------------------------------------------ */
+/* 10DLC audit P1-B: STOP from a number with no customer record         */
+/* ------------------------------------------------------------------ */
+section('inbound STOP from an unknown number still clears the open request');
+$ph2 = '+15035550177';
+$srC = Db::insert('service_requests', [
+    'doc_number' => 'TEST-STOP-C', 'reported_name' => 'Stranded Caller', 'reported_phone' => $ph2,
+    'comms_consent' => 1, 'created_at' => now(), 'updated_at' => now(),
+]);
+check('sanity: no customer on that number', Db::one('SELECT id FROM customers WHERE phone_e164=?', [$ph2]), null);
+WebhookController::inboundSms(['from' => $ph2, 'text' => 'opt out', 'reference' => 'test-stop-2'], $gw);
+check('request C consent cleared',              (int) Db::val('SELECT comms_consent FROM service_requests WHERE id=?', [$srC]), 0);
+check('inbound message still recorded',         (int) Db::val("SELECT COUNT(*) FROM messages WHERE phone_e164=? AND direction='IN'", [$ph2]), 1);
+check('recorded as a stop keyword',             Db::val("SELECT template FROM messages WHERE phone_e164=? AND direction='IN'", [$ph2]), 'stop');
+$blocked = Sms::queueForRequest(Db::one('SELECT * FROM service_requests WHERE id=?', [$srC]), 'locate', ['{link}' => 'x']);
+check('request text now blocked',               $blocked['ok'], false);
+
+Db::q("DELETE FROM audit_log WHERE (entity_type='customer' AND entity_id=?) OR (entity_type='service_request' AND entity_id IN (?,?,?))", [$custId, $srA, $srB, $srC]);
+Db::q("DELETE FROM messages WHERE phone_e164 IN (?,?)", [$ph, $ph2]);
+Db::q("DELETE FROM service_requests WHERE id IN (?,?,?)", [$srA, $srB, $srC]);
+Db::q('DELETE FROM customers WHERE id = ?', [$custId]);
+
 Db::q('DELETE FROM messages WHERE provider_ref = ?', [$ref]);
 printf("\n\033[1m%d passed, %d failed\033[0m\n", $PASS, $FAIL);
 exit($FAIL > 0 ? 1 : 0);

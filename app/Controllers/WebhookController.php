@@ -188,13 +188,24 @@ final class WebhookController
             'created_at'   => now(),
         ]);
 
-        if (!$cust) {
-            ApiLog::write('sms', $gateway->driverName(), 'webhook:inbound', $from, true, 'No customer on that number.');
+        if ($word === 'stop') {
+            // STOP is honoured whether or not a customer record exists. A
+            // stranded caller who is still only a service request has the
+            // same right to revoke, and Telnyx's own opt-out list does not
+            // cover the outbox driver (10DLC audit P1-B).
+            $how = 'Replied "' . $evt['text'] . '" from ' . $from;
+            if ($cust) {
+                Consent::optOut($cust, 'revoked_by_sms', $how);
+            } else {
+                $n = Consent::revokeRequests($from, $how);
+                ApiLog::write('sms', $gateway->driverName(), 'webhook:inbound', $from, true,
+                    'STOP from a number with no customer record; intake consent cleared on ' . $n . ' request(s).');
+            }
             return;
         }
 
-        if ($word === 'stop') {
-            Consent::optOut($cust, 'revoked_by_sms', 'Replied "' . $evt['text'] . '" from ' . $from);
+        if (!$cust) {
+            ApiLog::write('sms', $gateway->driverName(), 'webhook:inbound', $from, true, 'No customer on that number.');
             return;
         }
 

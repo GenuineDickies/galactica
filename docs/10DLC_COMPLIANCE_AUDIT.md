@@ -2,7 +2,7 @@
 
 **Scope:** every SMS path in the WKR admin application — `Sms`, `Consent`, `Health`,
 `TelnyxSmsGateway`, `WebhookController::inboundSms`, and the consent capture UI.
-**Date:** 2026-08-06 · **Status:** findings only, **no code changed**.
+**Date:** 2026-08-06 · **Status:** P1-A, P1-B, P1-C and P2-H resolved (see each finding); P2-D–G, P3-I–K remain open — tracked in `OPEN_ISSUES.md`.
 
 ---
 
@@ -58,6 +58,8 @@ that a carrier audit or TCR vetting would flag · **P3** = hygiene / drift risk.
 
 ### P1-A — An SMS opt-out does not clear intake consent, so a customer who texted STOP can still be texted
 
+**RESOLVED 2026-09-04.** `Consent::optOut()` now calls `Consent::revokeRequests()`, which zeroes `comms_consent` on every open request whose `reported_phone` normalises to the customer's number (the verbal path reuses the same routine). `Sms::queueForRequest()` additionally looks up the customer — by `customer_id`, else by phone — and refuses when `do_not_contact = 1`, so re-ticking the intake box cannot undo a STOP. Covered by `tests/sms_delivery.php` ("inbound STOP from a known customer…" and "after STOP, queueForRequest is blocked…").
+
 **Evidence.** `Consent::optOut()` (`app/Domain.php:820-829`) updates `customers` and
 writes an audit row. It never touches `service_requests.comms_consent`. But `Sms::queueForRequest()`
 (`app/Domain.php:972-1002`) gates *solely* on `$sr['comms_consent']` — it never looks
@@ -81,6 +83,8 @@ Each subsequent message is independently actionable under the TCPA.
 
 ### P1-B — STOP from a number with no customer record is recorded but not acted on
 
+**RESOLVED 2026-09-04.** `WebhookController::inboundSms()` handles STOP before the no-customer return: with no customer it calls `Consent::revokeRequests($from, …)` and logs how many requests were cleared. `msg_index.php` copy rewritten to state what actually happens. Covered by `tests/sms_delivery.php` ("inbound STOP from an unknown number…").
+
 **Evidence.** `WebhookController::inboundSms()` (`app/Controllers/WebhookController.php:161-164`)
 returns early when no `customers` row matches `phone_e164`. The STOP branch at line 166
 is never reached.
@@ -103,6 +107,8 @@ to change alongside the handler.
 ---
 
 ### P1-C — "Opt out" (two words) is not recognised, though the FCC names it explicitly
+
+**RESOLVED 2026-09-04.** `TelnyxSmsGateway::keyword()` normalises punctuation to spaces and tries the first two words as a phrase before the first word; `OPT OUT`, `STOP ALL`, `CANCEL SUBSCRIPTION` and `OPT IN` added to the lists. All seven FCC words plus casing/punctuation variants are pinned in `tests/sms_delivery.php`.
 
 **Evidence.** `TelnyxSmsGateway::keyword()` (`app/Services/Services.php:246-254`)
 strips non-alpha characters, then takes **only the first whitespace-delimited token**.

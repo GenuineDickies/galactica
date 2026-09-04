@@ -134,13 +134,21 @@ Handled automatically, and this is the compliance-critical part:
 
 | Reply | Effect |
 |---|---|
-| STOP, STOPALL, UNSUBSCRIBE, CANCEL, END, QUIT, REVOKE, OPTOUT | `sms_approved = 0`, `do_not_contact = 1`, audited |
-| START, UNSTOP, YES, SUBSCRIBE, OPTIN | consent restored with a fresh timestamp, confirmation sent |
+| STOP, STOP ALL, UNSUBSCRIBE, CANCEL, CANCEL SUBSCRIPTION, END, QUIT, REVOKE, OPT OUT (also OPTOUT, STOPALL) | customer: `sms_approved = 0`, `do_not_contact = 1`; every open service request on that number: `comms_consent = 0`; both audited. Works with no customer record. |
+| START, UNSTOP, YES, SUBSCRIBE, OPT IN (also OPTIN) | consent restored with a fresh timestamp, confirmation sent — known customers only |
 | HELP, INFO | help message returned |
+
+Matching is on the leading phrase: the first two words are tried, then the
+first word, after punctuation is dropped — so "opt out", "OPT-OUT", "Stop." and
+"STOP texting me" all revoke, while "please stop by the shop" does not (the
+FCC's per-se list is "stop, quit, end, revoke, opt out, cancel, unsubscribe").
 
 STOP is honoured immediately and unconditionally. It is the one instruction that
 is never queued, reviewed or second-guessed. Every inbound message is stored,
-whether or not it matches a customer.
+whether or not it matches a customer. Revocation reaches both consent gates:
+the customer row (read by `Sms::queue`) and the request's intake consent (read
+by `Sms::queueForRequest`, which also refuses when a customer sharing the
+number is do-not-contact — the stricter answer wins).
 
 Outbound templates all carry "Reply STOP to opt out"; the opt-in confirmation
 carries the full 10DLC disclosure.

@@ -13,7 +13,7 @@ $statusHelp = [
     'DELIVERED'   => 'The carrier confirmed it reached the customer\'s handset. The time shown is theirs, not ours.',
     'UNCONFIRMED' => 'The carrier never returned a receipt. Not a failure — some networks simply don\'t report, and the message almost certainly arrived.',
     'FAILED'      => 'The carrier rejected it. The reason on the row says why — a dead number and a spam block need different responses.',
-    'RECEIVED'    => 'Inbound — the customer texted us. STOP and START are applied to consent automatically.',
+    'RECEIVED'    => 'Inbound — the customer texted us. STOP (or quit, end, cancel, unsubscribe, revoke, opt out) clears consent on the customer record and every open request on that number, whether or not a customer record exists. START re-enables a known customer only. Anything else is filed as a reply — read it; a plain-language "stop texting me" must be honoured by hand.',
     'BLOCKED'     => 'Never sent, on purpose. No SMS consent on file, or the customer texted STOP. The reason is on the row.',
 ];
 ?>
