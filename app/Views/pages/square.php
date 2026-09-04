@@ -20,7 +20,7 @@ $qs = static fn(array $over = []): string => http_build_query(array_merge(
 ?>
 <?php if ($needs_schema): ?>
 <div class="panel"><div class="panel__body">
-  <div class="alert alert--warn mb0"><div>
+  <div class="alert alert--warn mb0" role="status"><div>
     <strong>The Square mirror has not been created yet.</strong>
     Apply the pending change on <a href="<?= url('admin/schema') ?>">Database schema</a>,
     then import with <span class="docno">php data/square_sync.php --all</span>.
@@ -46,8 +46,8 @@ $qs = static fn(array $over = []): string => http_build_query(array_merge(
 
   <form method="get" action="<?= url('square') ?>" class="row wrap mt4" style="gap:8px;align-items:flex-end">
     <input type="hidden" name="lens" value="<?= e($lens) ?>">
-    <div class="field" style="margin:0"><label>Search</label>
-      <input class="input" name="q" value="<?= e($q) ?>" placeholder="Name, note, email, reference…" style="min-width:280px"></div>
+    <div class="field" style="margin:0"><label for="q">Search</label>
+      <input class="input" name="q" value="<?= e($q) ?>" placeholder="Name, note, email, reference…" style="min-width:280px" id="q"></div>
     <button class="btn">Search</button>
     <?php if ($q !== ''): ?><a class="btn btn--ghost" href="<?= url('square?lens=' . $lens) ?>">Clear</a><?php endif; ?>
   </form>
@@ -88,15 +88,15 @@ $qs = static fn(array $over = []): string => http_build_query(array_merge(
   <div class="panel__body<?= $rows ? ' panel__body--flush' : '' ?>">
     <?php if (!$rows): ?>
       <div class="empty">
-        <div class="empty__icon">○</div>
+        <div class="empty__icon" aria-hidden="true">○</div>
         <div class="empty__title">Nothing in this view</div>
         <div class="empty__body">Try another lens, or clear the search.</div>
       </div>
     <?php else: ?>
     <div class="table-wrap"><table class="tbl">
       <thead><tr>
-        <th>Date</th><th>Type</th><th class="right">Amount</th><th>Status</th>
-        <th>Who</th><th>Note</th><th>Class</th><th></th>
+        <th scope="col">Date</th><th scope="col">Type</th><th class="right" scope="col">Amount</th><th scope="col">Status</th>
+        <th scope="col">Who</th><th scope="col">Note</th><th scope="col">Class</th><th scope="col"></th>
       </tr></thead>
       <tbody>
       <?php foreach ($rows as $r):

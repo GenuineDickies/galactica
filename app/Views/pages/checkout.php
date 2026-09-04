@@ -23,25 +23,25 @@ $due  = (float) $inv['balance_due'];
   body{ background:var(--bg); padding:24px 16px; }
   .pay{ max-width:520px; margin:0 auto; }
 </style>
-</head><body>
+</head><body class="is-customer-page">
 <div class="pay stack">
 
   <div class="row" style="justify-content:center;margin-bottom:4px">
     <div class="brand__mark" style="width:44px;height:44px;border-radius:13px;font-size:15px">WK</div>
     <div>
-      <div style="font-size:17px;font-weight:730"><?= e($co) ?></div>
+      <h1 style="font-size:17px;font-weight:730"><?= e($co) ?></h1>
       <div class="brand__sub"><?= e(App::config('company')['tagline']) ?></div>
     </div>
   </div>
 
   <?php foreach (flash() as $f): ?>
-    <div class="alert alert--<?= $f['type'] === 'err' ? 'danger' : ($f['type'] === 'warn' ? 'warn' : 'ok') ?>">
+    <div class="alert alert--<?= $f['type'] === 'err' ? 'danger' : ($f['type'] === 'warn' ? 'warn' : 'ok') ?>" role="status">
       <div><?= $f['msg'] ?></div>
     </div>
   <?php endforeach; ?>
 
   <?php if ($simulated): ?>
-    <div class="alert alert--info">
+    <div class="alert alert--info" role="status">
       <div>
         <strong>Demonstration checkout.</strong> No card processor is connected to this install, so nothing is
         charged and no card details are asked for or stored. Connect Square in Settings and links point at
@@ -67,7 +67,7 @@ $due  = (float) $inv['balance_due'];
 
     <div class="panel__body panel__body--flush">
       <table class="tbl">
-        <thead><tr><th>Item</th><th class="right">Qty</th><th class="right">Amount</th></tr></thead>
+        <thead><tr><th scope="col">Item</th><th class="right" scope="col">Qty</th><th class="right" scope="col">Amount</th></tr></thead>
         <tbody>
         <?php foreach ($lines as $l): ?>
           <tr>
@@ -106,12 +106,12 @@ $due  = (float) $inv['balance_due'];
     </div>
   <?php else: ?>
     <div class="panel">
-      <div class="panel__head"><div class="panel__title">Pay now</div></div>
+      <div class="panel__head"><h2 class="panel__title">Pay now</h2></div>
       <div class="panel__body">
         <form method="post" action="<?= url('pay/' . $link['order_id']) ?>">
           <?= csrf_field() ?>
           <div class="field">
-            <label>Add a tip for your technician</label>
+            <fieldset class="radio-group"><legend>Add a tip for your technician</legend>
             <div class="radio-row">
               <?php foreach ([0, 5, 10, 20] as $tip): ?>
                 <label class="radio-card">
@@ -119,10 +119,10 @@ $due  = (float) $inv['balance_due'];
                   <span><?= $tip === 0 ? 'No tip' : money($tip) ?></span>
                 </label>
               <?php endforeach; ?>
-            </div>
+            </div></fieldset>
             <div class="hint">Tips go to the technician in full and are not taxed.</div>
           </div>
-          <button class="btn btn--primary btn--block">Pay <?= money($due) ?></button>
+          <button class="btn btn--primary btn--block btn--lg">Pay <?= money($due) ?></button>
         </form>
       </div>
     </div>

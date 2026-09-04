@@ -33,25 +33,25 @@ $isTech   = $req['doc_type'] === 'WO';
   body{ background:var(--bg); padding:24px 16px; }
   .locate{ max-width:480px; margin:0 auto; }
 </style>
-</head><body>
+</head><body class="is-customer-page">
 <div class="locate stack">
 
   <div class="row" style="justify-content:center;margin-bottom:4px">
     <div class="brand__mark" style="width:44px;height:44px;border-radius:13px;font-size:15px">WK</div>
     <div>
-      <div style="font-size:17px;font-weight:730"><?= e($co) ?></div>
+      <h1 style="font-size:17px;font-weight:730"><?= e($co) ?></h1>
       <div class="brand__sub"><?= e(App::config('company')['tagline']) ?></div>
     </div>
   </div>
 
   <?php foreach (flash() as $f): ?>
-    <div class="alert alert--<?= $f['type'] === 'err' ? 'danger' : ($f['type'] === 'warn' ? 'warn' : 'ok') ?>">
+    <div class="alert alert--<?= $f['type'] === 'err' ? 'danger' : ($f['type'] === 'warn' ? 'warn' : 'ok') ?>" role="status">
       <div><?= $f['msg'] ?></div>
     </div>
   <?php endforeach; ?>
 
   <?php if ($received): ?>
-    <div class="alert alert--ok">
+    <div class="alert alert--ok" role="status">
       <div>
         <strong><?= $isTech ? 'Dispatch has your position.' : 'We have your location.' ?></strong>
         Received <?= e(fdatetime($req['received_at'])) ?>. <?= $isTech
@@ -72,7 +72,7 @@ $isTech   = $req['doc_type'] === 'WO';
     <?php endif; ?>
 
   <?php elseif ($dead): ?>
-    <div class="alert alert--warn">
+    <div class="alert alert--warn" role="status">
       <div>
         <strong>This link has expired.</strong>
         For your privacy, location links only work once and only for a few hours.
@@ -82,7 +82,7 @@ $isTech   = $req['doc_type'] === 'WO';
 
   <?php else: ?>
     <div class="panel">
-      <div class="panel__head"><div class="panel__title"><?= $isTech ? 'Share your position for routing' : 'Help us find you' ?></div></div>
+      <div class="panel__head"><h2 class="panel__title"><?= $isTech ? 'Share your position for routing' : 'Help us find you' ?></h2></div>
       <div class="panel__body">
         <p style="margin:0 0 12px">
           <?php if ($isTech): ?>
@@ -99,10 +99,9 @@ $isTech   = $req['doc_type'] === 'WO';
           <input type="hidden" id="loc_lat" name="latitude">
           <input type="hidden" id="loc_lng" name="longitude">
           <input type="hidden" id="loc_acc" name="accuracy_m">
-          <button class="btn btn--primary btn--block" type="button" id="loc_share_btn"
-                  style="font-size:17px;padding:14px">Share my location</button>
+          <button class="btn btn--primary btn--block btn--lg" type="button" id="loc_share_btn">Share my location</button>
         </form>
-        <div class="hint hide" id="loc_status" style="margin-top:10px"></div>
+        <div class="hint" id="loc_status" role="status" aria-live="assertive" style="margin-top:10px"></div>
         <div class="disclaimer">
           If the button does not work, your phone's location may be switched off.
           Turn on Location Services in your phone settings and try again —

@@ -16,7 +16,7 @@
 $fmt = fn ($v) => ($v === null || $v === '') ? '' : number_format((float) $v, 2, '.', '');
 ?>
 <div class="panel mb4"><div class="panel__body">
-  <div class="alert alert--info mb0"><div>
+  <div class="alert alert--info mb0" role="status"><div>
     Your cost is marked up to the customer price by the tier its cost falls into. The markup drops as parts get
     more expensive. Tiers must be contiguous — no gaps, no overlaps — and the top tier is open-ended
     (leave its <em>max</em> blank). A cost sitting exactly on a boundary uses the <strong>lower</strong> tier.
@@ -27,7 +27,7 @@ $fmt = fn ($v) => ($v === null || $v === '') ? '' : number_format((float) $v, 2,
 </div></div>
 
 <?php if ($errors): ?>
-  <div class="alert alert--danger">
+  <div class="alert alert--danger" role="status">
     <div><strong>The matrix wasn't saved:</strong>
       <ul style="margin:6px 0 0 18px">
         <?php foreach ($errors as $e): ?><li><?= e($e) ?></li><?php endforeach; ?>
@@ -48,22 +48,22 @@ $fmt = fn ($v) => ($v === null || $v === '') ? '' : number_format((float) $v, 2,
     <div class="panel__body panel__body--flush">
       <div class="table-wrap"><table class="tbl" id="tierTable">
         <thead><tr>
-          <th>Min cost</th><th>Max cost <span class="faint">(blank = open top)</span></th>
-          <th class="right">Markup %</th><th style="width:44px"></th>
+          <th scope="col">Min cost</th><th scope="col">Max cost <span class="faint">(blank = open top)</span></th>
+          <th class="right" scope="col">Markup %</th><th style="width:44px" scope="col"></th>
         </tr></thead>
         <tbody>
         <?php foreach (($tiers ?: [['min_cost'=>'0.00','max_cost'=>null,'markup_pct'=>'0.00']]) as $t): ?>
           <tr data-tier-row>
             <td><div class="row" style="gap:4px;align-items:center"><span class="faint">$</span>
-              <input class="input" name="min_cost[]" type="number" step="0.01" min="0" style="max-width:120px"
+              <input class="input" name="min_cost[]" aria-label="Minimum cost, dollars" type="number" step="0.01" min="0" style="max-width:120px"
                      value="<?= e($fmt($t['min_cost'] ?? '')) ?>"></div></td>
             <td><div class="row" style="gap:4px;align-items:center"><span class="faint">$</span>
-              <input class="input" name="max_cost[]" type="number" step="0.01" min="0" style="max-width:120px"
+              <input class="input" name="max_cost[]" aria-label="Maximum cost, dollars (blank for open-ended)" type="number" step="0.01" min="0" style="max-width:120px"
                      placeholder="open" value="<?= e($fmt($t['max_cost'] ?? '')) ?>"></div></td>
             <td class="right"><div class="row" style="gap:4px;align-items:center;justify-content:flex-end">
-              <input class="input right" name="markup_pct[]" type="number" step="0.01" min="0" style="max-width:100px"
+              <input class="input right" name="markup_pct[]" aria-label="Markup percent" type="number" step="0.01" min="0" style="max-width:100px"
                      value="<?= e($fmt($t['markup_pct'] ?? '')) ?>"><span class="faint">%</span></div></td>
-            <td class="right"><button type="button" class="btn btn--ghost btn--sm" data-remove-tier title="Remove tier">✕</button></td>
+            <td class="right"><button type="button" class="btn btn--ghost btn--sm" data-remove-tier aria-label="Remove tier"><span aria-hidden="true">✕</span></button></td>
           </tr>
         <?php endforeach; ?>
         </tbody>
@@ -81,11 +81,11 @@ $fmt = fn ($v) => ($v === null || $v === '') ? '' : number_format((float) $v, 2,
 <template id="tierRowTemplate">
   <tr data-tier-row>
     <td><div class="row" style="gap:4px;align-items:center"><span class="faint">$</span>
-      <input class="input" name="min_cost[]" type="number" step="0.01" min="0" style="max-width:120px"></div></td>
+      <input class="input" name="min_cost[]" aria-label="Minimum cost, dollars" type="number" step="0.01" min="0" style="max-width:120px"></div></td>
     <td><div class="row" style="gap:4px;align-items:center"><span class="faint">$</span>
-      <input class="input" name="max_cost[]" type="number" step="0.01" min="0" style="max-width:120px" placeholder="open"></div></td>
+      <input class="input" name="max_cost[]" aria-label="Maximum cost, dollars (blank for open-ended)" type="number" step="0.01" min="0" style="max-width:120px" placeholder="open"></div></td>
     <td class="right"><div class="row" style="gap:4px;align-items:center;justify-content:flex-end">
-      <input class="input right" name="markup_pct[]" type="number" step="0.01" min="0" style="max-width:100px"><span class="faint">%</span></div></td>
-    <td class="right"><button type="button" class="btn btn--ghost btn--sm" data-remove-tier title="Remove tier">✕</button></td>
+      <input class="input right" name="markup_pct[]" aria-label="Markup percent" type="number" step="0.01" min="0" style="max-width:100px"><span class="faint">%</span></div></td>
+    <td class="right"><button type="button" class="btn btn--ghost btn--sm" data-remove-tier aria-label="Remove tier"><span aria-hidden="true">✕</span></button></td>
   </tr>
 </template>

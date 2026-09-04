@@ -14,7 +14,7 @@ $held = array_filter($rows, fn ($r) => ($r['overpayment_status'] ?? null) === 'H
   <div class="panel__head"><div class="panel__title">Overpayments to verify</div><div class="topbar__spacer"></div><span class="tag"><?= count($held) ?></span></div>
   <div class="panel__body panel__body--flush">
     <div class="table-wrap"><table class="tbl">
-      <thead><tr><th>Payment</th><th>Invoice</th><th>Customer</th><th class="right">Extra received</th><th class="right">What was it?</th></tr></thead>
+      <thead><tr><th scope="col">Payment</th><th scope="col">Invoice</th><th scope="col">Customer</th><th class="right" scope="col">Extra received</th><th class="right" scope="col">What was it?</th></tr></thead>
       <tbody>
       <?php foreach ($held as $r): ?>
         <tr>
@@ -42,11 +42,11 @@ $held = array_filter($rows, fn ($r) => ($r['overpayment_status'] ?? null) === 'H
   <div class="panel__head"><div class="panel__title">Payments</div><div class="topbar__spacer"></div><span class="tag"><?= count($rows) ?></span></div>
   <div class="panel__body panel__body--flush">
   <?php if (!$rows): ?>
-    <div class="empty"><div class="empty__icon">▦</div><div class="empty__title">No payments recorded</div>
+    <div class="empty"><div class="empty__icon" aria-hidden="true">▦</div><div class="empty__title">No payments recorded</div>
       <div class="empty__body">Payments can only be taken against an issued invoice.</div></div>
   <?php else: ?>
     <div class="table-wrap"><table class="tbl">
-      <thead><tr><th>Payment</th><th>Invoice</th><th>Customer</th><th>Method</th><th>When</th><th class="right">Tip</th><th class="right">Amount</th><th class="right">Receipt</th></tr></thead>
+      <thead><tr><th scope="col">Payment</th><th scope="col">Invoice</th><th scope="col">Customer</th><th scope="col">Method</th><th scope="col">When</th><th class="right" scope="col">Tip</th><th class="right" scope="col">Amount</th><th class="right" scope="col">Receipt</th></tr></thead>
       <tbody>
       <?php foreach ($rows as $r): ?>
         <tr>

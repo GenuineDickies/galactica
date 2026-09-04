@@ -87,9 +87,10 @@ a side.
 **6. Run everything.**
 
 - `php -l` every `.php` file (recursive).
-- `php tests/markup.php`, `php tests/ledger.php`, and the rest of `tests/*.php`
-  that run without a live DB; with local DB up, the `*_integration.php` tests
-  and `tests/e2e.sh`.
+- `php tests/markup.php`, `php tests/ledger.php`, `php tests/a11y_lint.php`
+  (static WCAG pattern check over every view and app.js — must be 0 failed),
+  and the rest of `tests/*.php` that run without a live DB; with local DB up,
+  the `*_integration.php` tests and `tests/e2e.sh`.
 - Note which tests are stale or don't cover the code they name.
 
 ### Hard constraints

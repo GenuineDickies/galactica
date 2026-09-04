@@ -167,7 +167,7 @@ final class DiagnosticController
             Audit::log('diagnostic', (int) $r['id'], 'option:added', $label);
             return $id;
         });
-        flash('Option "' . $label . '" opened. Add the parts and labor, then come back to the report.');
+        flash('Option "' . e($label) . '" opened. Add the parts and labor, then come back to the report.');
         redirect('/estimates/' . $id);
     }
 

@@ -21,7 +21,7 @@ $groups = [];
 foreach ($rows as $r) { $groups[$r['account_type']][] = $r; }
 ?>
 <div class="panel mb4"><div class="panel__body">
-  <div class="alert alert--info mb0"><div>
+  <div class="alert alert--info mb0" role="status"><div>
     The account numbers your catalog items post to. Fix a typo'd <em>name</em> with Rename — the number is
     the identity and does not change. <strong>Retire</strong> takes an account out of the pickers but keeps
     it on screen and on anything already using it; that is what you want once an account has real history
@@ -38,7 +38,7 @@ foreach ($rows as $r) { $groups[$r['account_type']][] = $r; }
     <div class="topbar__spacer"></div><span class="tag"><?= count($groups[$type]) ?> accounts</span></div>
   <div class="panel__body panel__body--flush">
     <div class="table-wrap"><table class="tbl">
-      <thead><tr><th style="width:90px">Number</th><th>Name</th><th class="right">Used by</th><th style="width:270px"></th></tr></thead>
+      <thead><tr><th style="width:90px" scope="col">Number</th><th scope="col">Name</th><th class="right" scope="col">Used by</th><th style="width:270px" scope="col"></th></tr></thead>
       <tbody>
       <?php foreach ($groups[$type] as $r):
         $n = (int) ($usage[$r['account_number']] ?? 0); ?>
@@ -47,7 +47,7 @@ foreach ($rows as $r) { $groups[$r['account_type']][] = $r; }
           <td>
             <form method="post" action="<?= url('accounts/' . $r['id'] . '/rename') ?>" class="row" style="gap:6px">
               <?= csrf_field() ?>
-              <input class="input" name="name" value="<?= e($r['name']) ?>" required>
+              <input class="input" name="name" aria-label="New name for <?= e($r['name']) ?>" value="<?= e($r['name']) ?>" required>
               <button class="btn btn--ghost btn--sm">Rename</button>
             </form>
           </td>
@@ -82,13 +82,13 @@ foreach ($rows as $r) { $groups[$r['account_type']][] = $r; }
     <form method="post" action="<?= url('accounts') ?>">
       <?= csrf_field() ?>
       <div class="form-grid">
-        <div class="field"><label class="req">Number</label>
-          <input class="input" name="account_number" placeholder="4050" required>
+        <div class="field"><label class="req" for="account_number">Number</label>
+          <input class="input" name="account_number" placeholder="4050" required id="account_number">
           <div class="hint">1xxx assets · 2xxx liabilities · 3xxx equity · 4xxx revenue · 5xxx COGS · 6xxx+ expenses.</div></div>
-        <div class="field"><label class="req">Name</label>
-          <input class="input" name="name" placeholder="Towing Revenue" required></div>
-        <div class="field"><label>Type</label>
-          <select class="select" name="account_type">
+        <div class="field"><label class="req" for="name">Name</label>
+          <input class="input" name="name" placeholder="Towing Revenue" required id="name"></div>
+        <div class="field"><label for="account_type">Type</label>
+          <select class="select" name="account_type" id="account_type">
             <?php foreach ($labels as $type => $label): ?>
               <option value="<?= e($type) ?>" <?= $type === 'REVENUE' ? 'selected' : '' ?>><?= e($label) ?></option>
             <?php endforeach; ?>

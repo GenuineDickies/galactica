@@ -19,7 +19,7 @@
 $anything = $pending || $indexes;
 ?>
 <div class="panel mb4"><div class="panel__body">
-  <div class="alert alert--info mb0"><div>
+  <div class="alert alert--info mb0" role="status"><div>
     What the deployed code expects, compared with what this database actually has.
     Applying only ever <strong>adds</strong> — missing tables are created and missing columns
     appended. Nothing is dropped, renamed or retyped, and existing rows are untouched.
@@ -40,13 +40,13 @@ $anything = $pending || $indexes;
 
 <?php if (!$anything): ?>
   <div class="empty">
-    <div class="empty__icon">✓</div>
+    <div class="empty__icon" aria-hidden="true">✓</div>
     <div class="empty__title">Schema is up to date</div>
     <div class="empty__body">Every table and column the running code expects is present in this database.</div>
   </div>
 <?php else: ?>
   <div class="table-wrap"><table class="tbl">
-    <thead><tr><th>Table</th><th>Column</th><th>Definition</th></tr></thead>
+    <thead><tr><th scope="col">Table</th><th scope="col">Column</th><th scope="col">Definition</th></tr></thead>
     <tbody>
     <?php foreach ($pending as $table => $cols): ?>
       <?php if ($cols === []): ?>
@@ -75,7 +75,7 @@ $anything = $pending || $indexes;
            full-scan. Indexes declared for a table that already existed were
            never created at all until Db::addMissingIndexes was written. */ ?>
   <div class="table-wrap mt4"><table class="tbl">
-    <thead><tr><th>Index</th><th>Table</th><th>Columns</th><th>Kind</th></tr></thead>
+    <thead><tr><th scope="col">Index</th><th scope="col">Table</th><th scope="col">Columns</th><th scope="col">Kind</th></tr></thead>
     <tbody>
     <?php foreach ($indexes as [$iname, $itable, $icols, $iuniq]): ?>
       <tr>

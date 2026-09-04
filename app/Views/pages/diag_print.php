@@ -68,7 +68,7 @@ $techName = $tech ? trim($tech['first_name'] . ' ' . $tech['last_name']) : '';
         <div class="row" style="align-items:flex-start">
           <div class="brand__mark" style="width:46px;height:46px;border-radius:13px;font-size:15px">WK</div>
           <div>
-            <div style="font-size:17px;font-weight:730"><?= e($co['name']) ?></div>
+            <h1 style="font-size:17px;font-weight:730"><?= e($co['name']) ?></h1>
             <div class="muted text-sm"><?= e($co['addr']) ?><br><?= e($co['phone']) ?> · <?= e($co['email']) ?></div>
           </div>
         </div>
@@ -114,7 +114,7 @@ $techName = $tech ? trim($tech['first_name'] . ' ' . $tech['last_name']) : '';
   </div>
 
   <?php if ($drive): ?>
-    <div class="alert <?= e($driveCls) ?>"><strong>Drivability</strong><?= e($drive) ?></div>
+    <div class="alert <?= e($driveCls) ?>" role="status"><strong>Drivability</strong><?= e($drive) ?></div>
   <?php endif; ?>
 
   <?php if (trim((string) $r['concern']) !== ''): ?>

@@ -31,25 +31,25 @@ $vLabel  = trim(($vehicle['year'] ?? $sr['v_year'] ?? '') . ' '
   body{ background:var(--bg); padding:24px 16px; }
   .sign{ max-width:560px; margin:0 auto; }
 </style>
-</head><body>
+</head><body class="is-customer-page">
 <div class="sign stack">
 
   <div class="row" style="justify-content:center;margin-bottom:4px">
     <div class="brand__mark" style="width:44px;height:44px;border-radius:13px;font-size:15px">WK</div>
     <div>
-      <div style="font-size:17px;font-weight:730"><?= e($co) ?></div>
+      <h1 style="font-size:17px;font-weight:730"><?= e($co) ?></h1>
       <div class="brand__sub"><?= e(App::config('company')['tagline']) ?></div>
     </div>
   </div>
 
   <?php foreach (flash() as $f): ?>
-    <div class="alert alert--<?= $f['type'] === 'err' ? 'danger' : ($f['type'] === 'warn' ? 'warn' : 'ok') ?>">
+    <div class="alert alert--<?= $f['type'] === 'err' ? 'danger' : ($f['type'] === 'warn' ? 'warn' : 'ok') ?>" role="status">
       <div><?= $f['msg'] ?></div>
     </div>
   <?php endforeach; ?>
 
   <?php if ($signed): ?>
-    <div class="alert alert--ok">
+    <div class="alert alert--ok" role="status">
       <div>
         <strong>Signed<?= $req['signer_name'] ? ' by ' . e($req['signer_name']) : '' ?>.</strong>
         Recorded <?= e(fdatetime($req['signed_at'])) ?>. Nothing further is needed —
@@ -57,7 +57,7 @@ $vLabel  = trim(($vehicle['year'] ?? $sr['v_year'] ?? '') . ' '
       </div>
     </div>
   <?php else: ?>
-    <div class="alert alert--<?= $isAuth ? 'warn' : 'info' ?>">
+    <div class="alert alert--<?= $isAuth ? 'warn' : 'info' ?>" role="status">
       <div>
         <?php if ($isAuth): ?>
           <strong>Please review and authorize this work.</strong>
@@ -93,7 +93,7 @@ $vLabel  = trim(($vehicle['year'] ?? $sr['v_year'] ?? '') . ' '
 
     <div class="panel__body panel__body--flush">
       <table class="tbl">
-        <thead><tr><th>Item</th><th class="right">Qty</th><th class="right">Amount</th></tr></thead>
+        <thead><tr><th scope="col">Item</th><th class="right" scope="col">Qty</th><th class="right" scope="col">Amount</th></tr></thead>
         <tbody>
         <?php foreach ($lines as $l): ?>
           <tr>
@@ -125,14 +125,14 @@ $vLabel  = trim(($vehicle['year'] ?? $sr['v_year'] ?? '') . ' '
 
   <?php if (!$signed): ?>
   <div class="panel">
-    <div class="panel__head"><div class="panel__title"><?= $isAuth ? 'Authorize this work' : 'Confirm the work is complete' ?></div></div>
+    <div class="panel__head"><h2 class="panel__title"><?= $isAuth ? 'Authorize this work' : 'Confirm the work is complete' ?></h2></div>
     <div class="panel__body">
       <form method="post" action="<?= url('sign/' . $req['token']) ?>" data-sig-required>
         <?= csrf_field() ?>
         <div class="field">
-          <label class="req">Your full name</label>
+          <label class="req" for="signer_name">Your full name</label>
           <input class="input" name="signer_name" required autocomplete="name"
-                 value="<?= e($req['signer_name'] ?: $name) ?>">
+                 value="<?= e($req['signer_name'] ?: $name) ?>" id="signer_name">
         </div>
 
         <?php View::partial('partials/signature_field', [
@@ -155,7 +155,7 @@ $vLabel  = trim(($vehicle['year'] ?? $sr['v_year'] ?? '') . ' '
           <?php endif; ?>
         </div>
 
-        <button class="btn btn--primary btn--block mt4">
+        <button class="btn btn--primary btn--block btn--lg mt4">
           <?= $isAuth ? 'Authorize the work' : 'Confirm and sign off' ?>
         </button>
       </form>

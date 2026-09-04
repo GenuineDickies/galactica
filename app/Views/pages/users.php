@@ -20,8 +20,8 @@
   <div class="panel__body panel__body--flush">
     <div class="table-wrap"><table class="tbl">
       <thead><tr>
-        <th>Name</th><th>Role</th><th>Email</th><th>Jobs</th><th>Status</th>
-        <th style="width:230px">Password</th><th style="width:120px"></th>
+        <th scope="col">Name</th><th scope="col">Role</th><th scope="col">Email</th><th scope="col">Jobs</th><th scope="col">Status</th>
+        <th style="width:230px" scope="col">Password</th><th style="width:120px" scope="col"></th>
       </tr></thead>
       <tbody>
       <?php foreach ($rows as $r): $inactive = (int) $r['is_active'] === 0; ?>
@@ -34,7 +34,7 @@
           <td><?= !$inactive ? '<span class="badge badge--success"><i></i>Active</span>' : '<span class="badge badge--slate"><i></i>Inactive</span>' ?></td>
           <td><form method="post" action="<?= url('users/' . (int) $r['id'] . '/password') ?>" style="display:flex;gap:6px;align-items:center">
             <?= csrf_field() ?>
-            <input class="input" name="password" type="password" minlength="8" required placeholder="New password" autocomplete="new-password" style="width:130px;padding:4px 8px;font-size:12px">
+            <input class="input" name="password" aria-label="New password for <?= e($r['email'] ?? '') ?>" type="password" minlength="8" required placeholder="New password" autocomplete="new-password" style="width:130px;padding:4px 8px;font-size:12px">
             <button class="btn btn--ghost btn--sm" type="submit">Reset</button>
           </form></td>
           <td class="right"><form method="post" action="<?= url('users/' . (int) $r['id'] . '/toggle') ?>" style="display:inline"><?= csrf_field() ?>
@@ -59,8 +59,8 @@
   </div>
 </div>
 
-<div class="modal-bg" id="newUserModal"><div class="modal panel">
-  <div class="panel__head"><div class="panel__title">Add a user</div><div class="topbar__spacer"></div>
+<div class="modal-bg" id="newUserModal"><div class="modal panel" role="dialog" aria-modal="true" aria-labelledby="newUserModal_title">
+  <div class="panel__head"><div class="panel__title" id="newUserModal_title">Add a user</div><div class="topbar__spacer"></div>
     <button class="btn btn--ghost btn--sm" data-modal-close type="button">Close</button></div>
   <div class="panel__body">
     <?php /* autocomplete off throughout: without it Chrome fills the signed-in
@@ -68,17 +68,17 @@
     <form method="post" action="<?= url('users') ?>" autocomplete="off">
       <?= csrf_field() ?>
       <div class="form-grid">
-        <div class="field"><label class="req">First name</label><input class="input" name="first_name" required autocomplete="off"></div>
-        <div class="field"><label class="req">Last name</label><input class="input" name="last_name" required autocomplete="off"></div>
-        <div class="field"><label class="req">Email</label><input class="input" name="email" type="email" required autocomplete="off"></div>
-        <div class="field"><label>Phone</label><input class="input" name="phone" data-mask="phone" autocomplete="off"></div>
-        <div class="field"><label class="req">Password</label><input class="input" name="password" type="password" minlength="8" required autocomplete="new-password">
+        <div class="field"><label class="req" for="first_name">First name</label><input class="input" name="first_name" required autocomplete="off" id="first_name"></div>
+        <div class="field"><label class="req" for="last_name">Last name</label><input class="input" name="last_name" required autocomplete="off" id="last_name"></div>
+        <div class="field"><label class="req" for="email">Email</label><input class="input" name="email" type="email" required autocomplete="off" id="email"></div>
+        <div class="field"><label for="phone">Phone</label><input class="input" name="phone" data-mask="phone" autocomplete="off" id="phone"></div>
+        <div class="field"><label class="req" for="password">Password</label><input class="input" name="password" type="password" minlength="8" required autocomplete="new-password" id="password">
           <div class="hint">Minimum 8 characters. Stored as a bcrypt hash.</div></div>
-        <div class="field"><label>Role</label><select class="select" name="role">
+        <div class="field"><label for="role">Role</label><select class="select" name="role" id="role">
           <option value="TECHNICIAN">Technician</option><option value="DISPATCH">Dispatch</option><option value="ADMIN">Admin</option></select></div>
       </div>
       <label class="checkline"><input type="checkbox" name="can_accept_jobs" value="1" checked><span>Can be dispatched work orders</span></label>
-      <div class="field mt4"><label>Notes</label><textarea class="textarea" name="notes"></textarea></div>
+      <div class="field mt4"><label for="notes">Notes</label><textarea class="textarea" name="notes" id="notes"></textarea></div>
       <button class="btn btn--primary btn--block">Create user</button>
     </form>
   </div>

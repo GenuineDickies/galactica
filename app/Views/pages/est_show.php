@@ -28,9 +28,9 @@ $chain = ['Drafted', 'Priced', 'Authorized', 'Dispatched', 'Invoiced'];
 <div class="panel mb4">
   <div class="chain">
     <?php foreach ($chain as $i => $label): $n = $i + 1; ?>
-      <?php if ($i): ?><span class="chain__arrow">▸</span><?php endif; ?>
+      <?php if ($i): ?><span class="chain__arrow" aria-hidden="true">▸</span><?php endif; ?>
       <span class="chain__step <?= $n < $step ? 'is-done' : ($n === $step ? 'is-current' : '') ?>">
-        <?= $n < $step ? '✓' : '' ?><?= e($label) ?>
+        <?= $n < $step ? '<span aria-hidden="true">✓</span><span class="sr-only">Done: </span>' : ($n === $step ? '<span class="sr-only">Current step: </span>' : '') ?><?= e($label) ?>
       </span>
     <?php endforeach; ?>
   </div>
@@ -73,7 +73,7 @@ $chain = ['Drafted', 'Priced', 'Authorized', 'Dispatched', 'Invoiced'];
 </div>
 
 <?php if ($est['status'] === 'APPROVED' && $sigNeeded): ?>
-  <div class="alert alert--warn">
+  <div class="alert alert--warn" role="status">
     <div>
       <strong>Authorized by <?= e($est['authorized_by']) ?> on <?= e(fdatetime($est['authorized_at'])) ?>. Signature owed on the work order.</strong>
       Dispatch a technician now — verbal is enough to roll. Because this is over <?= money($thresh) ?>,
@@ -83,7 +83,7 @@ $chain = ['Drafted', 'Priced', 'Authorized', 'Dispatched', 'Invoiced'];
     </div>
   </div>
 <?php elseif ($est['status'] === 'APPROVED'): ?>
-  <div class="alert alert--ok">
+  <div class="alert alert--ok" role="status">
     <div>
       <strong>Authorized by <?= e($est['authorized_by']) ?> on <?= e(fdatetime($est['authorized_at'])) ?>.</strong>
       Method: <?= e(status_label((string) $est['authorization_method'])) ?><?= $est['authorization_ip'] ? ' · IP ' . e($est['authorization_ip']) : '' ?>.
@@ -91,11 +91,11 @@ $chain = ['Drafted', 'Priced', 'Authorized', 'Dispatched', 'Invoiced'];
     </div>
   </div>
 <?php elseif ($est['status'] === 'DECLINED'): ?>
-  <div class="alert alert--danger">
+  <div class="alert alert--danger" role="status">
     <div><strong>Customer declined.</strong> <?= e($est['decline_reason'] ?: 'No reason recorded.') ?></div>
   </div>
 <?php elseif ($sigNeeded): ?>
-  <div class="alert alert--info">
+  <div class="alert alert--info" role="status">
     <div>
       <strong>Over <?= money($thresh) ?> — the work order will need a customer signature before work begins.</strong>
       Verbal approval is all that is needed here to dispatch. The signature is taken on the work
@@ -105,7 +105,7 @@ $chain = ['Drafted', 'Priced', 'Authorized', 'Dispatched', 'Invoiced'];
 <?php endif; ?>
 
 <?php if (!$gate['ok'] && $est['status'] !== 'DECLINED'): ?>
-  <div class="alert alert--warn gate">
+  <div class="alert alert--warn gate" role="status">
     <div>
       <strong>Cannot dispatch yet.</strong> <?= e($gate['reason']) ?>
       No technician is activated until this estimate is a real contract.
@@ -126,12 +126,12 @@ $chain = ['Drafted', 'Priced', 'Authorized', 'Dispatched', 'Invoiced'];
       <div class="panel__head"><div class="panel__title">Work orders</div></div>
       <div class="panel__body panel__body--flush">
         <table class="tbl">
-          <thead><tr><th>Status</th><th>Work order</th><th>Technician</th><th>Outcome</th><th class="right">Raised</th></tr></thead>
+          <thead><tr><th scope="col">Status</th><th scope="col">Work order</th><th scope="col">Technician</th><th scope="col">Outcome</th><th class="right" scope="col">Raised</th></tr></thead>
           <tbody>
           <?php foreach ($wos as $w): ?>
             <tr data-href="<?= url('work-orders/' . $w['id']) ?>">
               <td><?= badge($w['status']) ?></td>
-              <td class="docno"><?= e($w['doc_number']) ?></td>
+              <td class="docno"><a class="row-link" href="<?= url('work-orders/' . $w['id']) ?>"><?= e($w['doc_number']) ?></a></td>
               <td>
                 <?php if (!$w['technician_id'] && !in_array($w['status'], ['COMPLETED', 'CANCELLED', 'NO_SHOW'], true)): ?>
                   <form method="post" action="<?= url('work-orders/' . $w['id'] . '/assign') ?>" class="row" data-stop-row-click>
@@ -194,7 +194,7 @@ $chain = ['Drafted', 'Priced', 'Authorized', 'Dispatched', 'Invoiced'];
         <?php else: ?>
           <form method="post" action="<?= url('estimates/' . $est['id'] . '/po') ?>" class="row mt4">
             <?= csrf_field() ?>
-            <input class="input" name="po_number" value="<?= e($est['po_number']) ?>" placeholder="PO number" maxlength="64">
+            <input class="input" name="po_number" aria-label="PO number" value="<?= e($est['po_number']) ?>" placeholder="PO number" maxlength="64">
             <button class="btn btn--sm">Save</button>
           </form>
           <div class="hint">The customer's purchase-order number, if they issued one. Carries to the work order and invoice.</div>
@@ -232,11 +232,11 @@ $chain = ['Drafted', 'Priced', 'Authorized', 'Dispatched', 'Invoiced'];
           <?php endif; ?>
         <?php endif; ?>
         <?php if ($est['location_captured_at']): ?>
-          <div class="alert alert--ok mb2"><div>
+          <div class="alert alert--ok mb2" role="status"><div>
             <strong>Position received <?= e(ago($est['location_captured_at'])) ?></strong> from the customer's phone.
           </div></div>
         <?php elseif ($locOpen): ?>
-          <div class="alert alert--info mb2"><div>
+          <div class="alert alert--info mb2" role="status"><div>
             Link sent <?= $locOpen['sent_at'] ? e(ago($locOpen['sent_at'])) : 'just now' ?>,
             <?= $locOpen['viewed_at'] ? 'opened ' . e(ago($locOpen['viewed_at'])) : 'not opened yet' ?>.
             It expires <?= e(fdate($locOpen['expires_at'], 'g:i A')) ?>.
@@ -301,7 +301,7 @@ $chain = ['Drafted', 'Priced', 'Authorized', 'Dispatched', 'Invoiced'];
     <div class="panel">
       <div class="panel__head"><div class="panel__title">Captured signature</div></div>
       <div class="panel__body">
-        <img src="<?= e($est['signature_data']) ?>" alt="Customer signature" style="width:100%;background:#0a1120;border-radius:var(--r-md);border:1px solid var(--line)">
+        <img src="<?= e($est['signature_data']) ?>" alt="Signature of <?= e($est['authorized_by'] ?: 'the customer') ?>" style="width:100%;background:#0a1120;border-radius:var(--r-md);border:1px solid var(--line)">
         <div class="hint"><?= e($est['authorized_by']) ?> · <?= e(fdatetime($est['authorized_at'])) ?></div>
       </div>
     </div>
@@ -329,7 +329,7 @@ $chain = ['Drafted', 'Priced', 'Authorized', 'Dispatched', 'Invoiced'];
       <div class="panel__body">
         <form method="post" action="<?= url('estimates/' . $est['id'] . '/decline') ?>">
           <?= csrf_field() ?>
-          <div class="field"><label>Reason</label><input class="input" name="decline_reason" placeholder="Too expensive / going to a shop"></div>
+          <div class="field"><label for="decline_reason">Reason</label><input class="input" name="decline_reason" placeholder="Too expensive / going to a shop" id="decline_reason"></div>
           <button class="btn btn--sm btn--block">Mark declined</button>
         </form>
       </div>
@@ -339,10 +339,10 @@ $chain = ['Drafted', 'Priced', 'Authorized', 'Dispatched', 'Invoiced'];
 </div>
 
 <div class="modal-bg" id="approveModal">
-  <div class="modal panel">
+  <div class="modal panel" role="dialog" aria-modal="true" aria-labelledby="approveModal_title">
     <div class="panel__head">
       <div>
-        <div class="panel__title">Record customer authorization</div>
+        <div class="panel__title" id="approveModal_title">Record customer authorization</div>
         <div class="panel__sub">Total: <strong><?= money($totals['total']) ?></strong></div>
       </div>
       <div class="topbar__spacer"></div>
@@ -354,23 +354,23 @@ $chain = ['Drafted', 'Priced', 'Authorized', 'Dispatched', 'Invoiced'];
       <form method="post" action="<?= url('estimates/' . $est['id'] . '/authorize') ?>">
         <?= csrf_field() ?>
         <div class="field">
-          <label class="req">Who is authorizing (first and last name)</label>
-          <input class="input" name="authorized_by" required placeholder="<?= e($custName) ?>">
+          <label class="req" for="authorized_by">Who is authorizing (first and last name)</label>
+          <input class="input" name="authorized_by" required placeholder="<?= e($custName) ?>" id="authorized_by">
         </div>
         <div class="field">
-          <label>How was it authorized</label>
+          <fieldset class="radio-group"><legend>How was it authorized</legend>
           <div class="radio-row">
             <?php foreach (['VERBAL' => 'Verbal', 'SMS' => 'Text message', 'IN_PERSON' => 'In person', 'PROVIDER_PO' => 'Provider PO'] as $k => $v): ?>
               <label class="radio-card"><input type="radio" name="authorization_method" value="<?= e($k) ?>" <?= $k === 'VERBAL' ? 'checked' : '' ?>><span><?= e($v) ?></span></label>
             <?php endforeach; ?>
-          </div>
+          </div></fieldset>
         </div>
 
         <?php /* No signature pad here. The estimate only ever needs verbal
                  approval — that is what releases the technician. The customer's
                  signature is taken on the WORK ORDER, before work begins, on
                  the technician's device or through a texted link. */ ?>
-        <div class="alert alert--info">
+        <div class="alert alert--info" role="status">
           <div>
             Name, time, IP address and device are recorded against this authorization.
             <?php if ($sigNeeded): ?>
@@ -386,10 +386,10 @@ $chain = ['Drafted', 'Priced', 'Authorized', 'Dispatched', 'Invoiced'];
 </div>
 
 <div class="modal-bg" id="dispatchModal">
-  <div class="modal panel">
+  <div class="modal panel" role="dialog" aria-modal="true" aria-labelledby="dispatchModal_title">
     <div class="panel__head">
       <div>
-        <div class="panel__title">Dispatch to the field</div>
+        <div class="panel__title" id="dispatchModal_title">Dispatch to the field</div>
         <div class="panel__sub">This raises the work order — the document that actually activates a technician.</div>
       </div>
       <div class="topbar__spacer"></div>
@@ -399,8 +399,8 @@ $chain = ['Drafted', 'Priced', 'Authorized', 'Dispatched', 'Invoiced'];
       <form method="post" action="<?= url('estimates/' . $est['id'] . '/dispatch') ?>">
         <?= csrf_field() ?>
         <div class="field">
-          <label>Technician</label>
-          <select class="select" name="technician_id">
+          <label for="technician_id">Technician</label>
+          <select class="select" name="technician_id" id="technician_id">
             <option value="">— leave unassigned, dispatch later —</option>
             <?php foreach ($techs as $t): ?>
               <option value="<?= (int) $t['id'] ?>"><?= e($t['first_name'] . ' ' . $t['last_name']) ?> (<?= e(ucfirst(strtolower($t['role']))) ?>)</option>
@@ -408,7 +408,7 @@ $chain = ['Drafted', 'Priced', 'Authorized', 'Dispatched', 'Invoiced'];
           </select>
           <div class="hint">Only active technicians accepting jobs are listed.</div>
         </div>
-        <div class="alert alert--info"><div>The authorized scope is copied onto the work order. Anything the technician adds in the field is measured against it.</div></div>
+        <div class="alert alert--info" role="status"><div>The authorized scope is copied onto the work order. Anything the technician adds in the field is measured against it.</div></div>
         <button class="btn btn--primary btn--block">Raise the work order</button>
       </form>
     </div>
@@ -416,10 +416,10 @@ $chain = ['Drafted', 'Priced', 'Authorized', 'Dispatched', 'Invoiced'];
 </div>
 
 <div class="modal-bg" id="vinModal">
-  <div class="modal panel">
+  <div class="modal panel" role="dialog" aria-modal="true" aria-labelledby="vinModal_title">
     <div class="panel__head">
       <div>
-        <div class="panel__title">Capture VIN</div>
+        <div class="panel__title" id="vinModal_title">Capture VIN</div>
         <div class="panel__sub">The driver is responsible for this, not the customer.</div>
       </div>
       <div class="topbar__spacer"></div>
@@ -431,24 +431,24 @@ $chain = ['Drafted', 'Priced', 'Authorized', 'Dispatched', 'Invoiced'];
         <div class="field">
           <label class="req" for="vin_input">VIN</label>
           <input class="input" id="vin_input" name="vin" data-vin maxlength="17" style="font-family:var(--mono);letter-spacing:.08em" placeholder="1HGCM82633A004352">
-          <div class="hint" data-vin-hint="vin_input">Enter a VIN to create or find a vehicle. If the VIN is unavailable, enter a plate below to find an existing VIN record.</div>
+          <div class="hint" data-vin-hint="vin_input" aria-live="polite">Enter a VIN to create or find a vehicle. If the VIN is unavailable, enter a plate below to find an existing VIN record.</div>
         </div>
         <div class="form-grid form-grid--3" data-vehicle-picker data-vehicle-endpoint="<?= url('vehicles/options') ?>">
-          <div class="field"><label>Year</label><input class="input" name="year" type="number" value="<?= e($sr['v_year']) ?>" data-veh="year"></div>
-          <div class="field"><label>Make</label><input class="input" name="make" value="<?= e($sr['v_make']) ?>" data-veh="make"></div>
-          <div class="field"><label>Model</label><input class="input" name="model" value="<?= e($sr['v_model']) ?>" data-veh="model"></div>
-          <div class="field"><label>Colour</label><input class="input" name="color" value="<?= e($sr['v_color']) ?>"></div>
-          <div class="field"><label>Plate</label><input class="input" name="plate" value="<?= e($sr['v_plate']) ?>" style="text-transform:uppercase"></div>
-          <div class="field"><label>Plate state</label>
-            <select class="select" name="plate_state">
+          <div class="field"><label for="year">Year</label><input class="input" name="year" type="number" value="<?= e($sr['v_year']) ?>" data-veh="year" id="year"></div>
+          <div class="field"><label for="make">Make</label><input class="input" name="make" value="<?= e($sr['v_make']) ?>" data-veh="make" id="make"></div>
+          <div class="field"><label for="model">Model</label><input class="input" name="model" value="<?= e($sr['v_model']) ?>" data-veh="model" id="model"></div>
+          <div class="field"><label for="color">Colour</label><input class="input" name="color" value="<?= e($sr['v_color']) ?>" id="color"></div>
+          <div class="field"><label for="plate">Plate</label><input class="input" name="plate" value="<?= e($sr['v_plate']) ?>" style="text-transform:uppercase" id="plate"></div>
+          <div class="field"><label for="plate_state">Plate state</label>
+            <select class="select" name="plate_state" id="plate_state">
               <option value="">—</option>
               <?php foreach (us_states() as $s): ?><option <?= $s === $sr['v_plate_state'] ? 'selected' : '' ?>><?= e($s) ?></option><?php endforeach; ?>
             </select>
           </div>
         </div>
         <label class="checkline"><input type="checkbox" name="no_plate" value="1"><span>No plate on this vehicle</span></label>
-        <div class="field"><label>Reason there is no plate</label>
-          <select class="select" name="no_plate_reason">
+        <div class="field"><label for="no_plate_reason">Reason there is no plate</label>
+          <select class="select" name="no_plate_reason" id="no_plate_reason">
             <option value="">—</option>
             <option>NoPlateIssued</option><option>PlateMissing</option><option>PlateObstructed</option>
             <option>FleetNoPlatePolicy</option><option>CustomerDeclined</option>

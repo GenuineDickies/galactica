@@ -39,7 +39,7 @@ $locked = $locked ?? false;
   <div class="panel__body panel__body--flush">
     <?php if (!$lines): ?>
       <div class="empty">
-        <div class="empty__icon">＋</div>
+        <div class="empty__icon" aria-hidden="true">＋</div>
         <div class="empty__title">No line items yet</div>
         <div class="empty__body">Nothing can be priced, dispatched or billed until at least one catalog item is on this document.</div>
         <?php if (!$locked): ?><button class="btn btn--primary" data-modal-open="catalogModal">Add the first item</button><?php endif; ?>
@@ -56,10 +56,10 @@ $locked = $locked ?? false;
       ?>
       <div class="table-wrap"><table class="tbl">
         <thead><tr>
-          <th style="width:38px">#</th><th>Item</th><th>SKU</th>
-          <th class="right">Qty</th><th class="right internal">My cost</th><th class="right">Price</th>
-          <th class="right">Total</th><th class="right internal">Profit</th>
-          <?php if (!$locked): ?><th style="width:44px"></th><?php endif; ?>
+          <th style="width:38px" scope="col">#</th><th scope="col">Item</th><th scope="col">SKU</th>
+          <th class="right" scope="col">Qty</th><th class="right internal" scope="col">My cost</th><th class="right" scope="col">Price</th>
+          <th class="right" scope="col">Total</th><th class="right internal" scope="col">Profit</th>
+          <?php if (!$locked): ?><th style="width:44px" scope="col"></th><?php endif; ?>
         </tr></thead>
         <tbody>
         <?php foreach ($lines as $l):
@@ -109,7 +109,7 @@ $locked = $locked ?? false;
             <td class="right">
               <form method="post" action="<?= e($delUrlBase . '/' . $l['id'] . '/delete') ?>" style="display:inline">
                 <?= csrf_field() ?>
-                <button class="btn btn--ghost btn--sm" data-confirm="Remove this line?" title="Remove">✕</button>
+                <button class="btn btn--ghost btn--sm" data-confirm="Remove this line?" aria-label="Remove line"><span aria-hidden="true">✕</span></button>
               </form>
             </td>
             <?php endif; ?>
@@ -140,30 +140,29 @@ $locked = $locked ?? false;
 
 <?php if (!$locked): ?>
 <div class="modal-bg" id="catalogModal">
-  <div class="modal panel">
+  <div class="modal panel" role="dialog" aria-modal="true" aria-labelledby="catalogModal_title">
     <div class="panel__head">
       <div>
-        <div class="panel__title">Add from Products &amp; Services</div>
+        <div class="panel__title" id="catalogModal_title">Add from Products &amp; Services</div>
         <div class="panel__sub">Pick an item, set the quantity, adjust the price if the job warrants it.</div>
       </div>
       <div class="topbar__spacer"></div>
       <button class="btn btn--ghost btn--sm" data-modal-close type="button">Close</button>
     </div>
     <div class="panel__body">
-      <input class="input mb4" id="catalog_search" placeholder="Search by name, SKU or category…" autocomplete="off">
+      <input class="input mb4" id="catalog_search" aria-label="Search the catalog" placeholder="Search by name, SKU or category…" autocomplete="off">
       <div style="max-height:280px;overflow-y:auto;border:1px solid var(--line);border-radius:var(--r-md)">
         <table class="tbl">
-          <thead><tr><th>Item</th><th>SKU</th><th>Type</th><th class="right">Price</th></tr></thead>
+          <thead><tr><th scope="col">Item</th><th scope="col">SKU</th><th scope="col">Type</th><th class="right" scope="col">Price</th></tr></thead>
           <tbody>
           <?php foreach ($catalog as $it): ?>
             <?php $isMisc = (int) ($it['is_misc'] ?? 0) === 1; ?>
             <tr data-catalog-row="<?= e(strtolower($it['name'] . ' ' . $it['sku'] . ' ' . $it['category'] . ' ' . $it['item_type'] . ($isMisc ? ' misc miscellaneous' : ''))) ?>"
-                data-pick-item="<?= (int) $it['id'] ?>" data-price="<?= e((string) $it['unit_price']) ?>"
-                data-cost="<?= e((string) $it['unit_cost']) ?>" data-name="<?= e($it['name']) ?>"
-                data-misc="<?= $isMisc ? '1' : '0' ?>">
-              <td class="strong"><?= e($it['name']) ?>
+                data-pick-row="<?= (int) $it['id'] ?>">
+              <td class="strong"><button type="button" class="row-pick" data-pick-item="<?= (int) $it['id'] ?>" data-price="<?= e((string) $it['unit_price']) ?>"
+                    data-cost="<?= e((string) $it['unit_cost']) ?>" data-name="<?= e($it['name']) ?>" data-misc="<?= $isMisc ? '1' : '0' ?>"><?= e($it['name']) ?>
                 <?php if ($isMisc): ?><span class="badge badge--warn" style="margin-left:6px"><i></i>describe it</span><?php endif; ?>
-                <div class="text-sm faint"><?= e($it['category']) ?></div></td>
+                <span class="text-sm faint" style="display:block"><?= e($it['category']) ?></span></button></td>
               <td class="docno"><?= e($it['sku']) ?></td>
               <td><span class="badge badge--<?= $it['item_type'] === 'PART' ? 'accent' : ($it['item_type'] === 'FEE' ? 'warn' : 'info') ?>"><i></i><?= e($it['item_type']) ?></span></td>
               <td class="right num"><?= $isMisc ? '<span class="faint">you set it</span>'
@@ -178,7 +177,7 @@ $locked = $locked ?? false;
         <?= csrf_field() ?>
         <input type="hidden" name="catalog_item_id" id="catalog_item_id">
         <input type="hidden" name="price_overridden" id="line_overridden" value="0">
-        <div class="alert alert--info"><div>Selected: <strong id="picked_name">nothing yet</strong></div></div>
+        <div class="alert alert--info" role="status"><div>Selected: <strong id="picked_name">nothing yet</strong></div></div>
 
         <?php /* Shown only for an is_misc catalog item. What is typed here
                  becomes the LINE's name — it is what the customer reads on the
@@ -186,26 +185,26 @@ $locked = $locked ?? false;
                  spelling out. The markup matrix is not consulted for these:
                  the price entered below is the price billed. */ ?>
         <div class="field" id="misc_name_field" style="display:none">
-          <label>What is this charge for? <span class="faint">(printed on the customer document)</span></label>
+          <label for="line_name">What is this charge for? <span class="faint">(printed on the customer document)</span></label>
           <input class="input" id="line_name" name="line_name" maxlength="160"
                  placeholder="e.g. Additional labor — extra 40 min on seized lug nuts">
           <div class="hint">Be specific. This sentence is what defends the charge if the customer disputes it.</div>
         </div>
 
         <div class="form-grid form-grid--3">
-          <div class="field"><label>Quantity</label><input class="input" id="line_qty" name="qty" type="number" step="0.01" min="0" value="1"></div>
-          <div class="field"><label>My cost <span class="faint">(never shown to the customer)</span></label>
+          <div class="field"><label for="line_qty">Quantity</label><input class="input" id="line_qty" name="qty" type="number" step="0.01" min="0" value="1"></div>
+          <div class="field"><label for="line_cost">My cost <span class="faint">(never shown to the customer)</span></label>
             <input class="input" id="line_cost" name="unit_cost" type="number" step="0.01" min="0" placeholder="0.00"
                    data-price-endpoint="<?= url('pricing/suggest') ?>"></div>
-          <div class="field"><label>Customer price</label>
+          <div class="field"><label for="line_price">Customer price</label>
             <input class="input" id="line_price" name="unit_price" type="number" step="0.01" min="0">
             <div class="hint" id="line_price_note"></div></div>
         </div>
         <div class="row row--between wrap">
-          <div class="field" style="flex:1;min-width:220px"><label>Note on this line</label>
-            <input class="input" name="line_notes" placeholder="Optional — appears on the customer document"></div>
-          <div class="field"><label>Line total</label>
-            <div class="input" style="display:flex;align-items:center;min-width:120px" id="line_total_preview">$0.00</div></div>
+          <div class="field" style="flex:1;min-width:220px"><label for="line_notes">Note on this line</label>
+            <input class="input" name="line_notes" placeholder="Optional — appears on the customer document" id="line_notes"></div>
+          <div class="field"><div class="lbl" id="line_total_label">Line total</div>
+            <div class="input" style="display:flex;align-items:center;min-width:120px" id="line_total_preview" aria-labelledby="line_total_label" aria-live="polite">$0.00</div></div>
         </div>
         <button class="btn btn--primary btn--block" type="submit">Add line item</button>
       </form>

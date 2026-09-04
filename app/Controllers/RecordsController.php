@@ -45,7 +45,9 @@ final class CustomerController
      */
     public static function search(): void
     {
-        Auth::require();
+        // Intake and estimates are office work; a technician has no screen
+        // that consumes this and must not be able to walk the customer base.
+        Auth::requireRole('ADMIN', 'DISPATCH');
         header('Content-Type: application/json');
         $q = trim((string) input('q', ''));
         if (mb_strlen($q) < 2) { echo json_encode(['ok' => true, 'results' => []]); return; }
@@ -411,7 +413,7 @@ final class CatalogController
                 'description' => (string) input('description', ''),
             ]);
             $sku = $gen['sku'];
-            flash('Assigned part number ' . $sku . '. ' . $gen['note'], 'ok');
+            flash('Assigned part number ' . e($sku) . '. ' . e($gen['note']), 'ok');
         }
 
         if (Db::one('SELECT id FROM catalog_items WHERE sku = ?', [$sku])) {
@@ -1494,9 +1496,14 @@ final class UserController
             flash('That email already belongs to a login — every user signs in with their own address. Use a different one, or reactivate the existing account from the list below.', 'err');
             redirect('/users');
         }
+        $role = strtoupper(trim((string) input('role', 'TECHNICIAN')));
+        if (!in_array($role, ['ADMIN', 'DISPATCH', 'TECHNICIAN'], true)) {
+            flash('Pick a role from the list — that is not one of them.', 'err');
+            redirect('/users');
+        }
         Rules::setupAdminHeal();
         $id = Db::insert('users', [
-            'role'          => (string) input('role', 'TECHNICIAN'),
+            'role'          => $role,
             'first_name'    => (string) input('first_name', ''),
             'last_name'     => (string) input('last_name', ''),
             'email'         => $email,

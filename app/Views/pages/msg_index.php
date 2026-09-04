@@ -22,13 +22,13 @@ $statusHelp = [
   <div class="panel">
     <div class="panel__body">
       <?php if ($live): ?>
-        <div class="alert alert--ok mb0"><div>
+        <div class="alert alert--ok mb0" role="status"><div>
           <strong>Sending live through <?= e(Integrations::sms()->driverName()) ?>.</strong>
           Delivery receipts update these rows as they arrive, and inbound replies are handled automatically —
           STOP revokes consent the moment it lands.
         </div></div>
       <?php else: ?>
-        <div class="alert alert--warn mb0"><div>
+        <div class="alert alert--warn mb0" role="status"><div>
           <strong>Texting is not connected.</strong> The rows below are a record of what the system
           <em>would</em> have texted — none of it has reached a customer, and none of it will until
           Telnyx is connected in Settings. Until then, work by phone: nobody hand-sends these from a
@@ -48,12 +48,12 @@ $statusHelp = [
     <div class="panel__body">
       <form method="post" action="<?= url('messages/consent') ?>" class="row wrap">
         <?= csrf_field() ?>
-        <input class="input" name="phone" data-mask="phone" placeholder="(503) 555-0123" style="max-width:170px" required>
-        <select class="select" name="consent_action" style="max-width:150px">
+        <input class="input" name="phone" aria-label="Phone number" data-mask="phone" placeholder="(503) 555-0123" style="max-width:170px" required>
+        <select class="select" name="consent_action" aria-label="Consent action" style="max-width:150px">
           <option value="stop">Opt OUT — stop</option>
           <option value="start">Opt in — start</option>
         </select>
-        <input class="input" name="note" placeholder='How you learned it — "said stop texting on today&#039;s call"' style="min-width:260px;flex:1" required>
+        <input class="input" name="note" aria-label="How you learned it" placeholder='How you learned it — "said stop texting on today&#039;s call"' style="min-width:260px;flex:1" required>
         <button class="btn btn--sm">Record</button>
       </form>
       <div class="hint">
@@ -71,7 +71,7 @@ $statusHelp = [
          person waiting on a "Sent" badge is actually looking — not in a log
          they would have to know to go and read. */ ?>
 <div class="panel mb4"><div class="panel__body">
-  <div class="alert alert--warn mb0"><div>
+  <div class="alert alert--warn mb0" role="status"><div>
     <strong>Delivery receipts are not fully working.</strong>
     <?php foreach ($receiptHealth as $h): ?>
       <div class="mt2"><?= e($h['what']) ?>
@@ -92,11 +92,11 @@ $statusHelp = [
       <span class="hint" style="margin:0">hover a badge for what it means</span>
     </div>
 <?php if (!$rows): ?>
-  <div class="empty"><div class="empty__icon">✉</div><div class="empty__title">No messages</div>
+  <div class="empty"><div class="empty__icon" aria-hidden="true">✉</div><div class="empty__title">No messages</div>
     <div class="empty__body">Messages are queued automatically at dispatch, arrival, estimate, invoice and receipt.</div></div>
 <?php else: ?>
   <div class="table-wrap"><table class="tbl">
-    <thead><tr><th>Status</th><th></th><th>Customer</th><th>Job</th><th>Template</th><th>Message</th><th class="right">When</th><th></th></tr></thead><tbody>
+    <thead><tr><th scope="col">Status</th><th scope="col"></th><th scope="col">Customer</th><th scope="col">Job</th><th scope="col">Template</th><th scope="col">Message</th><th class="right" scope="col">When</th><th scope="col"></th></tr></thead><tbody>
     <?php foreach ($rows as $r): ?>
       <tr>
         <?php /* Message statuses now carry their own tones in STATUS_TONE, so

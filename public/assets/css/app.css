@@ -36,15 +36,15 @@
   /* Text */
   --text:          #e8eef8;
   --text-dim:      #93a3bd;
-  --text-faint:    #64748b;
+  --text-faint:    #8593ab;   /* ≥4.5:1 on every panel surface — see tests/a11y_lint.php R16 */
 
   /* Status signals — pills, dots, alerts. Nothing else. */
   --ok:            #15c47e;
   --info:          #38b6ff;
   --warn:          #f5a524;
-  --danger:        #f4436c;
+  --danger:        #ff5f85;   /* 4.5:1 as text on a panel; was #f4436c */
   --accentpill:    #a78bfa;
-  --slate:         #7c8ba5;
+  --slate:         #8a99b3;   /* badge--slate text on its tint ≥4.5:1 */
 
   /* Lines */
   --line:          rgba(255,255,255,.07);
@@ -253,7 +253,7 @@ h1,h2,h3,h4{ margin:0; font-weight:650; letter-spacing:-.01em; }
 .nav-btn.is-active svg{ opacity:1; }
 .nav-btn__count{
   margin-left:auto; font-size:var(--fs-xs); font-weight:700;
-  padding:1px 6px; border-radius:99px; background:rgba(255,255,255,.08); color:var(--text-dim);
+  padding:1px 6px; border-radius:99px; background:rgba(255,255,255,.08); color:var(--text);
 }
 
 /* ---------- Main ----------------------------------------------------- */
@@ -320,6 +320,7 @@ h1,h2,h3,h4{ margin:0; font-weight:650; letter-spacing:-.01em; }
   font-size:var(--fs-lg); font-weight:760;
   text-transform:uppercase; letter-spacing:.1em; color:#fff;
 }
+.panel__head .tag, .panel__head .faint, .panel__head .hint{ color:var(--text-dim); }
 .panel__sub{
   font-size:var(--fs-sm); color:var(--text-dim); margin-top:2px;
   text-transform:none; letter-spacing:normal; font-weight:400;
@@ -384,6 +385,9 @@ h1,h2,h3,h4{ margin:0; font-weight:650; letter-spacing:-.01em; }
 .btn--danger{ color:#ffdbe4; border-color:rgba(244,67,108,.4); background:linear-gradient(180deg,#3a1523,#25101a); }
 .btn--ghost{ background:transparent; border-color:var(--line); box-shadow:none; color:var(--text-dim); }
 .btn--sm{ padding:6px 11px; font-size:var(--fs-sm); }
+/* Phone pages: the primary action a customer or technician taps. 44px is
+   the WCAG 2.5.5 minimum for a target that changes state. */
+.btn--lg{ min-height:44px; padding:12px 20px; font-size:var(--fs-lg); }
 .btn--block{ width:100%; }
 .btn-row{ display:flex; gap:var(--s2); flex-wrap:wrap; align-items:center; }
 
@@ -439,7 +443,7 @@ table.tbl{ width:100%; border-collapse:collapse; font-size:var(--fs-md); }
 }
 .textarea{ min-height:82px; resize:vertical; }
 .input:focus,.select:focus,.textarea:focus{ outline:none; border-color:rgba(94,230,255,.5); box-shadow:var(--focus); }
-.input::placeholder{ color:#4d5b73; }
+.input::placeholder, .textarea::placeholder{ color:#8291a8; }
 .input.is-bad{ border-color:var(--danger); }
 .hint{ font-size:var(--fs-sm); color:var(--text-faint); margin-top:5px; }
 .hint--bad{ color:var(--danger); }
@@ -453,6 +457,8 @@ table.tbl{ width:100%; border-collapse:collapse; font-size:var(--fs-md); }
 
 .checkline{ display:flex; align-items:flex-start; gap:9px; padding:7px 0; font-size:var(--fs-md); color:var(--text-dim); cursor:pointer; }
 .checkline input{ margin-top:2px; accent-color:var(--brand); width:15px; height:15px; }
+fieldset.radio-row, fieldset.radio-group{ border:0; padding:0; margin:0; min-width:0; }
+fieldset.radio-row > legend, fieldset.radio-group > legend{ display:block; padding:0; font-size:var(--fs-xs); font-weight:700; letter-spacing:.13em; text-transform:uppercase; color:var(--text-dim); margin-bottom:6px; }
 .radio-row{ display:flex; gap:var(--s2); flex-wrap:wrap; }
 .radio-card{ position:relative; }
 .radio-card input{ position:absolute; opacity:0; }
@@ -587,7 +593,11 @@ body.is-customer .internal{ display:none !important; }
   font-size:var(--fs-sm); color:var(--text-faint);
 }
 .sigsheet.is-dirty .sigsheet__rule::after{ display:none; }
-.sigsheet__foot{ display:flex; gap:var(--s3); }
+.sigsheet__typed{ padding:var(--s3); border:1px solid var(--line-strong); border-radius:var(--r-md); background:#0a1120; }
+.sigsheet__typed .row{ align-items:stretch; }
+.sigsheet__typed .input{ flex:1; }
+.sigsheet__canvas:focus-visible{ outline:none; box-shadow:var(--focus); }
+.sigsheet__foot{ display:flex; gap:var(--s3); flex-wrap:wrap; }
 .sigsheet__foot .btn{ flex:1; }
 .sigsheet__foot .btn--primary{ flex:2; }
 
@@ -609,6 +619,54 @@ body.is-customer .internal{ display:none !important; }
   .tbl thead th, .muted, .faint, .tag{ color:#555; }
   .badge{ border:1px solid #999; color:#111 !important; background:#fff !important; }
   a{ color:#111; }
+}
+
+/* ---------- Accessibility scaffolding -------------------------------- *
+ * .skip-link  — first focusable thing on every page; visible only on focus.
+ * .sr-only    — text for screen readers only ("(current)", live regions).
+ * .row-link   — the real <a> inside a clickable table row; the row's
+ *               data-href stays for mouse users, the link is what a keyboard
+ *               or screen reader gets.
+ * .row-pick   — the real <button> inside a pickable catalog row.            */
+.skip-link{
+  position:absolute; left:-9999px; top:8px; z-index:1000;
+  padding:10px 16px; border-radius:var(--r-sm);
+  background:var(--brand); color:#fff; font-weight:700; text-decoration:none;
+  box-shadow:var(--shadow);
+}
+.skip-link:focus{ left:8px; outline:none; box-shadow:var(--focus), var(--shadow); }
+.sr-only{
+  position:absolute !important; width:1px; height:1px; padding:0; margin:-1px;
+  overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0;
+}
+#main:focus-visible{ outline:none; box-shadow:inset 0 0 0 2px rgba(94,230,255,.45); border-radius:var(--r-md); }
+.topbar__title:focus-visible{ outline:none; box-shadow:var(--focus); border-radius:var(--r-xs); }
+.row-link{ color:inherit; text-decoration:none; display:block; }
+.row-link:hover{ text-decoration:none; }
+.row-link:focus-visible{ outline:none; box-shadow:var(--focus); border-radius:var(--r-xs); }
+.row-pick{
+  display:block; width:100%; text-align:left; padding:0; margin:0;
+  font:inherit; font-weight:inherit; color:inherit; background:none; border:0; cursor:pointer;
+}
+.row-pick:focus-visible{ outline:none; box-shadow:var(--focus); border-radius:var(--r-xs); }
+tr.is-picked{ outline:1px solid rgba(94,230,255,.6); }
+.flash{ position:relative; padding-right:40px; }
+.flash__close{
+  position:absolute; top:8px; right:8px; width:28px; height:28px;
+  display:grid; place-items:center; border-radius:var(--r-xs);
+  background:transparent; border:0; color:inherit; font:inherit; font-size:16px; cursor:pointer; opacity:.7;
+}
+.flash__close:hover{ opacity:1; background:rgba(255,255,255,.08); }
+.flash__close:focus-visible{ outline:none; box-shadow:var(--focus); opacity:1; }
+/* The "why" under a disabled button — visible to everyone, not a title tooltip. */
+.why{ font-size:var(--fs-sm); color:var(--text-dim); margin-top:5px; }
+/* Phones (customer and technician): every state-changing control is a real
+   finger target. Applies where the pointer is coarse, so a desktop keeps
+   its density. */
+@media (pointer:coarse){
+  body.is-tech .btn--sm, body.is-tech .radio-card span,
+  body.is-customer-page .btn--sm, body.is-customer-page .radio-card span,
+  .sigsheet .btn{ min-height:44px; padding-top:11px; padding-bottom:11px; }
 }
 
 /* ---------- Utility -------------------------------------------------- */
@@ -649,6 +707,8 @@ body.is-customer .internal{ display:none !important; }
 @media (prefers-reduced-motion: reduce){
   .content{ animation:none; }
   .pjax-bar{ transition:opacity .2s ease; }
+  .flash, .modal{ animation:none; }
+  .spark i, .btn, .nav-btn, .tbl tbody tr{ transition:none; }
 }
 
 /* ---- User manual ----------------------------------------------------- *

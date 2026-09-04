@@ -216,6 +216,35 @@ function csrf_field(): string
 }
 
 /**
+ * A labelled form field — the `.field` idiom with the label wired to the
+ * control, so a screen reader names it and tapping the label focuses it.
+ *
+ *   <?= field('Phone', 'phone', '<input class="input" name="phone">', true, 'Digits only') ?>
+ *
+ * The control HTML is inserted as-is (escape values yourself); an `id`
+ * matching $name is added to the first control tag if it has none. Use this
+ * for every new field. Existing views wire `for`/`id` inline instead —
+ * tests/a11y_lint.php R1/R2 accept both. $name is also the id, so a name
+ * that appears twice on one page needs a suffix (`first_name_promote`).
+ */
+function field(string $label, string $name, string $inputHtml, bool $req = false, string $hint = ''): string
+{
+    $id = preg_replace('/[^A-Za-z0-9_-]+/', '_', $name);
+    if (!preg_match('/<(input|select|textarea)\b[^>]*\bid=/i', $inputHtml)) {
+        $inputHtml = preg_replace('/<(input|select|textarea)\b/i', '<$1 id="' . e($id) . '"', $inputHtml, 1);
+    }
+    $hintId = $id . '_hint';
+    if ($hint !== '' && !preg_match('/aria-describedby=/i', $inputHtml)) {
+        $inputHtml = preg_replace('/<(input|select|textarea)\b/i', '<$1 aria-describedby="' . e($hintId) . '"', $inputHtml, 1);
+    }
+    return '<div class="field">'
+         . '<label for="' . e($id) . '"' . ($req ? ' class="req"' : '') . '>' . e($label) . '</label>'
+         . $inputHtml
+         . ($hint !== '' ? '<div class="hint" id="' . e($hintId) . '">' . e($hint) . '</div>' : '')
+         . '</div>';
+}
+
+/**
  * A full standalone error page, for failures that happen before or instead of
  * the normal layout — CSRF misses, uncaught errors. Deliberately self-
  * contained: no session, no views, no assets, because it renders exactly when
@@ -349,6 +378,22 @@ function payment_terms_label(?string $terms): string
 }
 
 /** ISO 3779 check-digit validation. Rejects I, O, Q. */
+/**
+ * A captured signature is a PNG/JPEG data URI from the signature pad and
+ * nothing else — not a URL, not SVG, not an unbounded blob. It is stored as
+ * evidence and rendered into <img src>, so the shape is checked at the door.
+ */
+function signature_is_image(string $data): bool
+{
+    /* The length bound is checked separately: PCRE refuses a {n,m} quantifier
+     * above 65535 ("number too big"), so the old `{64,200000}` never compiled
+     * and every signature — drawn or typed — was rejected as unreadable
+     * (found 2026-09-03 while verifying the keyboard signing path). */
+    if (!preg_match('~^data:image/(png|jpeg);base64,([A-Za-z0-9+/=]+)$~', $data, $m)) { return false; }
+    $n = strlen($m[2]);
+    return $n >= 64 && $n <= 200000;
+}
+
 function vin_is_valid(?string $vin): bool
 {
     $vin = strtoupper(trim((string) $vin));

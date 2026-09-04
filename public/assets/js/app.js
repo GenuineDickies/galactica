@@ -100,6 +100,7 @@
 
         if (push) history.pushState({ pjax: true }, '', r.finalUrl);
         window.scrollTo(0, 0);
+        announceSwap();
         progress('done');
         document.body.classList.remove('is-loading');
         pending = null;
@@ -110,13 +111,35 @@
       });
   }
 
+  /* After a swap a sighted user sees the new page; a screen-reader user
+     hears nothing unless focus moves. Focus the page heading and say the
+     title in the live region. */
+  function announceSwap() {
+    var h = document.querySelector('.topbar h1, #main h1, #main');
+    if (h) { if (!h.hasAttribute('tabindex')) { h.setAttribute('tabindex', '-1'); } h.focus({ preventScroll: true }); }
+    var live = document.getElementById('live');
+    if (live) {
+      var t = (document.title || '').split(' · ')[0];
+      live.textContent = '';
+      setTimeout(function () { live.textContent = 'Loaded: ' + t; }, 50);
+    }
+  }
+
   /* ---- Button navigation (nav is buttons, not links) ---------------- */
   document.addEventListener('click', function (ev) {
     var btn = ev.target.closest('[data-url]');
     if (btn) { ev.preventDefault(); navigate(btn.getAttribute('data-url'), true); return; }
 
+    /* The real link inside a clickable row: same in-place navigation as
+       the row, but a modifier click (new tab) is left to the browser. */
+    var rowLink = ev.target.closest('a.row-link');
+    if (rowLink) {
+      if (ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.altKey || ev.button !== 0) { return; }
+      ev.preventDefault(); navigate(rowLink.getAttribute('href'), true); return;
+    }
+
     var row = ev.target.closest('tr[data-href]');
-    if (row && !ev.target.closest('a,button,input,label')) {
+    if (row && !ev.target.closest('a,button,input,label,select,textarea')) {
       navigate(row.getAttribute('data-href'), true);
       return;
     }
@@ -125,19 +148,12 @@
     if (open) {
       ev.preventDefault();
       var m = document.getElementById(open.getAttribute('data-modal-open'));
-      if (m) {
-        m.classList.add('is-open');
-        /* A modal the device is handed over for (signatures) hides every
-         * .internal element behind it — costs, profit, margins — until it
-         * closes. The customer sees prices and totals, never our numbers. */
-        if (m.hasAttribute('data-customer-facing')) { document.body.classList.add('is-customer'); }
-        var f = m.querySelector('input,select,textarea'); if (f) f.focus();
-      }
+      if (m) { openModal(m, open); }
       return;
     }
     if (ev.target.closest('[data-modal-close]') || ev.target.classList.contains('modal-bg')) {
       var bg = ev.target.closest('.modal-bg');
-      if (bg) { bg.classList.remove('is-open'); customerModeSync(); }
+      if (bg) { closeModal(bg); }
     }
 
     /* Markup matrix: add / remove a tier row. */
@@ -162,10 +178,73 @@
 
   document.addEventListener('keydown', function (ev) {
     if (ev.key === 'Escape') {
-      document.querySelectorAll('.modal-bg.is-open').forEach(function (m) { m.classList.remove('is-open'); });
-      customerModeSync();
+      document.querySelectorAll('.modal-bg.is-open').forEach(function (m) { closeModal(m); });
+    }
+    /* Belt and braces for a clickable row: Enter on the row itself (a
+       screen reader in browse mode may land there rather than on the link). */
+    if (ev.key === 'Enter' && ev.target.matches && ev.target.matches('tr[data-href]')) {
+      ev.preventDefault(); navigate(ev.target.getAttribute('data-href'), true);
     }
   });
+
+  /* ================================================================== *
+   *  Modal dialogs.
+   *
+   *  A modal is a real dialog to assistive tech: role="dialog", aria-modal,
+   *  a name from its title, Tab kept inside it, and focus handed back to
+   *  whatever opened it when it closes. Views mark up the semantics
+   *  statically (tests/a11y_lint.php R6); this fills in anything missing
+   *  at open time, so a modal built by script behaves the same.
+   * ================================================================== */
+  var modalOpener = new WeakMap();
+  var FOCUSABLE = 'a[href],button:not([disabled]),input:not([disabled]):not([type="hidden"]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])';
+
+  function visible(el) { return !!(el.offsetWidth || el.offsetHeight || el.getClientRects().length); }
+
+  function dialogSemantics(m) {
+    var panel = m.querySelector('.modal') || m;
+    if (!panel.getAttribute('role')) { panel.setAttribute('role', 'dialog'); }
+    if (!panel.getAttribute('aria-modal')) { panel.setAttribute('aria-modal', 'true'); }
+    if (!panel.getAttribute('aria-labelledby') && !panel.getAttribute('aria-label')) {
+      var t = panel.querySelector('.panel__title, .sigsheet__title, h2, h3');
+      if (t) { if (!t.id) { t.id = (m.id || 'dialog') + '_title'; } panel.setAttribute('aria-labelledby', t.id); }
+    }
+  }
+
+  function openModal(m, opener) {
+    modalOpener.set(m, opener || document.activeElement);
+    dialogSemantics(m);
+    m.classList.add('is-open');
+    /* A modal the device is handed over for (signatures) hides every
+     * .internal element behind it — costs, profit, margins — until it
+     * closes. The customer sees prices and totals, never our numbers. */
+    if (m.hasAttribute('data-customer-facing')) { document.body.classList.add('is-customer'); }
+    var f = m.querySelector('input:not([type="hidden"]):not([disabled]),select,textarea');
+    if (!f || !visible(f)) { f = Array.prototype.filter.call(m.querySelectorAll(FOCUSABLE), visible)[0]; }
+    if (f) { f.focus(); }
+  }
+
+  function closeModal(m) {
+    if (!m.classList.contains('is-open')) { return; }
+    m.classList.remove('is-open');
+    customerModeSync();
+    var back = modalOpener.get(m);
+    if (back && typeof back.focus === 'function' && document.contains(back)) { back.focus(); }
+  }
+
+  /* Keep Tab inside whichever layer is on top: the signature sheet over a
+     modal over the page. Capture phase, so it runs before anything else. */
+  document.addEventListener('keydown', function (ev) {
+    if (ev.key !== 'Tab') { return; }
+    var top = document.querySelector('.sigsheet.is-open') || document.querySelector('.modal-bg.is-open');
+    if (!top) { return; }
+    var items = Array.prototype.filter.call(top.querySelectorAll(FOCUSABLE), visible);
+    if (!items.length) { ev.preventDefault(); return; }
+    var first = items[0], last = items[items.length - 1];
+    var inside = top.contains(document.activeElement);
+    if (ev.shiftKey && (document.activeElement === first || !inside)) { ev.preventDefault(); last.focus(); }
+    else if (!ev.shiftKey && (document.activeElement === last || !inside)) { ev.preventDefault(); first.focus(); }
+  }, true);
 
   /* ================================================================== *
    *  Full-screen signature sheet.
@@ -180,32 +259,53 @@
    *  turned landscape to sign.
    * ================================================================== */
   var SigSheet = (function () {
-    var el, cv, ctx, rule, titleEl, subEl;
-    var drawing = false, dirty = false, onApply = null, last = null;
+    var el, cv, ctx, rule, titleEl, subEl, typedBox, typedInput, typedBtn;
+    var drawing = false, dirty = false, onApply = null, last = null, opener = null;
 
     function build() {
       el = document.createElement('div');
       el.className = 'sigsheet';
+      /* A real dialog: named by its title, modal, Tab kept inside by the
+         shared trap, focus returned to the trigger on close. */
+      el.setAttribute('role', 'dialog');
+      el.setAttribute('aria-modal', 'true');
+      el.setAttribute('aria-labelledby', 'sigsheet_title');
       el.innerHTML =
         '<div class="sigsheet__head">' +
-          '<div><div class="sigsheet__title"></div><div class="sigsheet__sub"></div></div>' +
+          '<div><div class="sigsheet__title" id="sigsheet_title"></div><div class="sigsheet__sub"></div></div>' +
           '<div class="topbar__spacer"></div>' +
         '</div>' +
         '<div class="sigsheet__pad">' +
-          '<canvas class="sigsheet__canvas"></canvas>' +
-          '<div class="sigsheet__rule"></div>' +
+          '<canvas class="sigsheet__canvas" tabindex="0" role="img" aria-label="Signature pad. Draw with a finger or mouse, or press Enter to type your name instead."></canvas>' +
+          '<div class="sigsheet__rule" aria-hidden="true"></div>' +
+        '</div>' +
+        /* Someone who cannot draw — a screen-reader user, a switch user, a
+           hand in a cast — confirms by typing their full name. The name is
+           rendered to the same canvas, so what is stored and audited is
+           the same PNG data URL the drawn path produces. */
+        '<div class="sigsheet__typed hide" data-sheet-typed-box>' +
+          '<label class="lbl" for="sigsheet_typed">Type your full name to sign</label>' +
+          '<div class="row">' +
+            '<input class="input" id="sigsheet_typed" type="text" autocomplete="name" placeholder="">' +
+            '<button type="button" class="btn btn--lg" data-sheet-typed-use>Use typed name</button>' +
+          '</div>' +
+          '<div class="hint">Typing your name here has the same effect as signing.</div>' +
         '</div>' +
         '<div class="sigsheet__foot">' +
           '<button type="button" class="btn btn--ghost" data-sheet-cancel>Cancel</button>' +
           '<button type="button" class="btn btn--ghost" data-sheet-clear>Clear</button>' +
-          '<button type="button" class="btn btn--primary" data-sheet-apply>Apply signature</button>' +
+          '<button type="button" class="btn btn--ghost" data-sheet-type aria-expanded="false">I can\u2019t draw \u2014 type my name</button>' +
+          '<button type="button" class="btn btn--primary btn--lg" data-sheet-apply>Apply signature</button>' +
         '</div>';
       document.body.appendChild(el);
 
-      cv      = el.querySelector('.sigsheet__canvas');
-      rule    = el.querySelector('.sigsheet__rule');
-      titleEl = el.querySelector('.sigsheet__title');
-      subEl   = el.querySelector('.sigsheet__sub');
+      cv         = el.querySelector('.sigsheet__canvas');
+      rule       = el.querySelector('.sigsheet__rule');
+      titleEl    = el.querySelector('.sigsheet__title');
+      subEl      = el.querySelector('.sigsheet__sub');
+      typedBox   = el.querySelector('[data-sheet-typed-box]');
+      typedInput = el.querySelector('#sigsheet_typed');
+      typedBtn   = el.querySelector('[data-sheet-type]');
 
       el.querySelector('[data-sheet-cancel]').addEventListener('click', close);
       el.querySelector('[data-sheet-clear]').addEventListener('click', wipe);
@@ -215,12 +315,42 @@
         if (onApply) { onApply(dirty ? cv.toDataURL('image/png') : ''); }
         close();
       });
+      typedBtn.addEventListener('click', function () { showTyped(true); });
+      el.querySelector('[data-sheet-typed-use]').addEventListener('click', useTyped);
+      typedInput.addEventListener('keydown', function (ev) { if (ev.key === 'Enter') { ev.preventDefault(); useTyped(); } });
+      cv.addEventListener('keydown', function (ev) {
+        if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); showTyped(true); }
+      });
 
       ['mousedown', 'touchstart'].forEach(function (e) { cv.addEventListener(e, start, { passive: false }); });
       ['mousemove', 'touchmove'].forEach(function (e) { cv.addEventListener(e, move,  { passive: false }); });
       ['mouseup', 'mouseleave', 'touchend', 'touchcancel'].forEach(function (e) { cv.addEventListener(e, end); });
 
       window.addEventListener('resize', function () { if (el.classList.contains('is-open')) { resize(); } });
+    }
+
+    function showTyped(on) {
+      typedBox.classList.toggle('hide', !on);
+      typedBtn.setAttribute('aria-expanded', on ? 'true' : 'false');
+      if (on) { resize(); typedInput.focus(); }
+    }
+
+    /* Render the typed name onto the pad exactly where a drawn signature
+       would sit, then treat it as drawn: Apply reads the canvas as usual. */
+    function useTyped() {
+      var name = (typedInput.value || '').trim().replace(/\s+/g, ' ');
+      if (!name) { typedInput.focus(); return; }
+      wipe();
+      var r = cv.getBoundingClientRect();
+      var size = Math.max(28, Math.min(72, Math.floor(r.width / Math.max(8, name.length) * 1.6)));
+      ctx.save();
+      ctx.fillStyle = '#e8eef8';
+      ctx.font = 'italic 600 ' + size + 'px "Segoe Script", "Brush Script MT", "Snell Roundhand", cursive';
+      ctx.textBaseline = 'alphabetic';
+      ctx.fillText(name, r.width * 0.08, r.height * 0.78 - 6, r.width * 0.84);
+      ctx.restore();
+      dirty = true; el.classList.add('is-dirty');
+      el.querySelector('[data-sheet-apply]').focus();
     }
 
     /* Re-sizing clears the bitmap, so the strokes so far are carried over
@@ -271,14 +401,19 @@
       el.classList.remove('is-open');
       document.body.style.overflow = last || '';
       onApply = null;
+      if (opener && typeof opener.focus === 'function' && document.contains(opener)) { opener.focus(); }
+      opener = null;
     }
 
     function open(opts) {
       if (!el) { build(); }
       onApply = opts.onApply || null;
+      opener  = opts.opener || document.activeElement;
       titleEl.textContent = opts.title || 'Customer signature';
       subEl.textContent   = opts.subtitle || '';
       subEl.style.display = opts.subtitle ? '' : 'none';
+      typedInput.value = '';
+      showTyped(false);
 
       last = document.body.style.overflow;
       document.body.style.overflow = 'hidden';   // no scrolling under the sheet
@@ -286,6 +421,7 @@
 
       wipe();
       resize();
+      cv.focus();
       // Re-signing starts from the mark already captured, so a customer can
       // touch it up rather than redo it.
       if (opts.existing) {
@@ -578,6 +714,7 @@
         title:    field.getAttribute('data-title'),
         subtitle: field.getAttribute('data-subtitle'),
         existing: target.value,
+        opener:   open,
         onApply:  apply
       });
     });
@@ -624,6 +761,13 @@
   /* Selecting a catalog item pre-fills cost + price + qty in the add-line form.
      Cost drives the suggested price via the matrix (see wireSuggest below). */
   $all('[data-pick-item]').forEach(function (el) {
+    /* The name is a real <button> (keyboard, screen reader); the rest of
+       the row still picks for a mouse. */
+    var pickRow = el.closest('tr[data-pick-row]');
+    if (pickRow && !pickRow._pickBound) {
+      pickRow._pickBound = true;
+      pickRow.addEventListener('click', function (ev) { if (!ev.target.closest('button')) { el.click(); } });
+    }
     el.addEventListener('click', function () {
       document.getElementById('catalog_item_id').value = el.getAttribute('data-pick-item');
       var costEl = document.getElementById('line_cost');
@@ -631,8 +775,11 @@
       document.getElementById('line_price').value = el.getAttribute('data-price');
       var ov = document.getElementById('line_overridden'); if (ov) ov.value = '0';
       document.getElementById('picked_name').textContent = el.getAttribute('data-name');
-      $all('[data-pick-item]').forEach(function (x) { x.style.outline = ''; });
-      el.style.outline = '1px solid rgba(94,230,255,.6)';
+      $all('[data-pick-item]').forEach(function (x) {
+        var r = x.closest('tr') || x; r.classList.remove('is-picked'); x.removeAttribute('aria-pressed');
+      });
+      (el.closest('tr') || el).classList.add('is-picked');
+      el.setAttribute('aria-pressed', 'true');
 
       /* A miscellaneous charge is priced by judgement, not by the matrix. Show
          the description field, leave the price empty for the user to set, and
@@ -775,6 +922,8 @@
         sel = document.createElement('select');
         sel.className = 'select';
         sel.name = el.name;
+        if (el.id) { sel.id = el.id; }             // keep the <label for> wired
+        if (el.getAttribute('aria-describedby')) { sel.setAttribute('aria-describedby', el.getAttribute('aria-describedby')); }
         el.parentNode.replaceChild(sel, el);
         el._vehInput = el;                          // keep the original for "Other…"
         sel._vehOriginal = el;
@@ -802,7 +951,7 @@
       sel.onchange = function () {
         if (sel.value === '__other') {
           var back = sel._vehOriginal || document.createElement('input');
-          if (!sel._vehOriginal) { back.className = 'input'; back.name = sel.name; }
+          if (!sel._vehOriginal) { back.className = 'input'; back.name = sel.name; if (sel.id) { back.id = sel.id; } }
           back.value = '';
           back._vehFree = true;
           sel.parentNode.replaceChild(back, sel);
@@ -974,13 +1123,29 @@
     });
   });
 
-  /* ---- Auto-dismiss flashes (they live in the shell, outside .main) -- */
-  setTimeout(function () {
-    document.querySelectorAll('.flash').forEach(function (f) {
+  /* ---- Flashes (they live in the shell, outside .main) --------------
+   *  Each gets a Dismiss button and auto-dismisses after 6 s — but the
+   *  timer pauses while the pointer or focus is on it, so nobody has a
+   *  message vanish mid-read (WCAG 2.2.1). */
+  document.querySelectorAll('.flash:not([data-flash-bound])').forEach(function (f) {
+    f.setAttribute('data-flash-bound', '1');
+    var x = document.createElement('button');
+    x.type = 'button'; x.className = 'flash__close'; x.setAttribute('aria-label', 'Dismiss');
+    x.innerHTML = '<span aria-hidden="true">\u00d7</span>';
+    f.appendChild(x);
+    var timer = null, remaining = 6000, started = 0;
+    function go() {
       f.style.transition = 'opacity .4s'; f.style.opacity = '0';
       setTimeout(function () { f.remove(); }, 420);
-    });
-  }, 6000);
+    }
+    function arm() { started = Date.now(); timer = setTimeout(go, remaining); }
+    function pause() { if (timer) { clearTimeout(timer); timer = null; remaining = Math.max(1500, remaining - (Date.now() - started)); } }
+    x.addEventListener('click', function () { pause(); go(); });
+    f.addEventListener('mouseenter', pause); f.addEventListener('focusin', pause);
+    f.addEventListener('mouseleave', function () { if (!timer) { arm(); } });
+    f.addEventListener('focusout', function () { setTimeout(function () { if (!timer && !f.contains(document.activeElement) && !f.matches(':hover')) { arm(); } }, 0); });
+    arm();
+  });
 
     /* Modules that live outside this IIFE (the pin map needs Leaflet, which
        loads on demand) hook here to re-run after a PJAX swap. */

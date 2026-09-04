@@ -10,13 +10,13 @@
     <div class="auth__logo">
       <div class="brand__mark" style="width:44px;height:44px;border-radius:13px;font-size:15px">WK</div>
       <div>
-        <div style="font-size:17px;font-weight:730">White Knight Roadside</div>
+        <h1 style="font-size:17px;font-weight:730">White Knight Roadside</h1>
         <div class="brand__sub">Admin · We Answer the Call</div>
       </div>
     </div>
 
     <?php foreach (flash() as $f): ?>
-      <div class="alert <?= $f['type'] === 'err' ? 'alert--danger' : 'alert--ok' ?>"><div><?= $f['msg'] ?></div></div>
+      <div class="alert <?= $f['type'] === 'err' ? 'alert--danger' : 'alert--ok' ?>" role="status"><div><?= $f['msg'] ?></div></div>
     <?php endforeach; ?>
 
     <div class="panel">

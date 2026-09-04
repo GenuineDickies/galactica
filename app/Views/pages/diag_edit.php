@@ -46,32 +46,32 @@ $vehLabel = $vehicle ? trim(($vehicle['year'] ?: '') . ' ' . $vehicle['make'] . 
       <form method="post" action="<?= url('work-orders/' . $wo['id'] . '/diagnostic') ?>">
         <?= csrf_field() ?>
         <div class="panel__body stack">
-          <div class="field"><label>Customer's concern</label>
-            <textarea class="textarea" name="concern" rows="2" placeholder="Won't start in the morning; clicks once, then nothing."><?= e($r['concern'] ?? $sr['reported_problem'] ?? '') ?></textarea>
+          <div class="field"><label for="concern">Customer's concern</label>
+            <textarea class="textarea" name="concern" rows="2" placeholder="Won't start in the morning; clicks once, then nothing." id="concern"><?= e($r['concern'] ?? $sr['reported_problem'] ?? '') ?></textarea>
             <div class="hint">Pre-filled from the request. Their words — what they asked you to look at.</div>
           </div>
-          <div class="field"><label>Findings <span class="req">*</span></label>
-            <textarea class="textarea" name="findings" rows="6" placeholder="Battery load-tested at 9.6V under load (spec ≥ 9.8V) — failed. Alternator charging at 14.2V — good. Terminals clean, cables tight. No fault codes stored."><?= e($r['findings'] ?? '') ?></textarea>
+          <div class="field"><label for="findings">Findings <span class="req">*</span></label>
+            <textarea class="textarea" name="findings" rows="6" placeholder="Battery load-tested at 9.6V under load (spec ≥ 9.8V) — failed. Alternator charging at 14.2V — good. Terminals clean, cables tight. No fault codes stored." id="findings"><?= e($r['findings'] ?? '') ?></textarea>
             <div class="hint">What you tested, what you measured, what you saw. Numbers where you have them.</div>
           </div>
-          <div class="field"><label>Recommendation <span class="req">*</span></label>
-            <textarea class="textarea" name="recommendations" rows="4" placeholder="Replace the battery. No other work needed at this time. Recheck charging system if the new battery drains within 30 days."><?= e($r['recommendations'] ?? '') ?></textarea>
+          <div class="field"><label for="recommendations">Recommendation <span class="req">*</span></label>
+            <textarea class="textarea" name="recommendations" rows="4" placeholder="Replace the battery. No other work needed at this time. Recheck charging system if the new battery drains within 30 days." id="recommendations"><?= e($r['recommendations'] ?? '') ?></textarea>
             <div class="hint">What should happen next, and what can wait.</div>
           </div>
 
-          <div class="field"><label>Can the vehicle be driven?</label>
+          <div class="field"><fieldset class="radio-group"><legend>Can the vehicle be driven?</legend>
             <div class="radio-row">
               <?php foreach (DiagnosticController::DRIVABILITY as $k => $v): ?>
                 <label class="radio-card"><input type="radio" name="drivability" value="<?= e($k) ?>" <?= ($r['drivability'] ?? '') === $k ? 'checked' : '' ?>><span><?= e($v) ?></span></label>
               <?php endforeach; ?>
-            </div>
+            </div></fieldset>
           </div>
 
         </div>
 
         <div class="panel__body" style="border-top:1px solid var(--line)">
-          <div class="field"><label>Internal notes</label>
-            <textarea class="textarea" name="internal_notes" rows="2" placeholder="Customer mentioned a second vehicle with the same issue — follow up."><?= e($r['internal_notes'] ?? '') ?></textarea>
+          <div class="field"><label for="internal_notes">Internal notes</label>
+            <textarea class="textarea" name="internal_notes" rows="2" placeholder="Customer mentioned a second vehicle with the same issue — follow up." id="internal_notes"><?= e($r['internal_notes'] ?? '') ?></textarea>
             <div class="hint">Never printed on the customer copy.</div>
           </div>
         </div>
@@ -91,7 +91,7 @@ $vehLabel = $vehicle ? trim(($vehicle['year'] ?: '') . ' ' . $vehicle['make'] . 
       <?php if ($options): ?>
       <div class="panel__body panel__body--flush">
         <table class="tbl">
-          <thead><tr><th>Option</th><th>Time frame</th><th>Status</th><th class="right">Total</th><th></th></tr></thead>
+          <thead><tr><th scope="col">Option</th><th scope="col">Time frame</th><th scope="col">Status</th><th class="right" scope="col">Total</th><th scope="col"></th></tr></thead>
           <tbody>
           <?php foreach ($options as $o): ?>
             <tr>
@@ -110,10 +110,10 @@ $vehLabel = $vehicle ? trim(($vehicle['year'] ?: '') . ' ' . $vehicle['make'] . 
         <?php if ($canQuote): ?>
           <form method="post" action="<?= url('diagnostics/' . $optFor['id'] . '/options') ?>" class="form-grid">
             <?= csrf_field() ?>
-            <div class="field"><label class="req">Option name</label>
-              <input class="input" name="option_label" required maxlength="80" placeholder="<?= $options ? 'Replace impeller only' : 'Replace pump' ?>"></div>
-            <div class="field"><label>Time frame</label>
-              <input class="input" name="option_timeframe" maxlength="120" placeholder="Same day · 2–3 days for the part"></div>
+            <div class="field"><label class="req" for="option_label">Option name</label>
+              <input class="input" name="option_label" required maxlength="80" placeholder="<?= $options ? 'Replace impeller only' : 'Replace pump' ?>" id="option_label"></div>
+            <div class="field"><label for="option_timeframe">Time frame</label>
+              <input class="input" name="option_timeframe" maxlength="120" placeholder="Same day · 2–3 days for the part" id="option_timeframe"></div>
             <div class="field col-full"><button class="btn <?= $options ? 'btn--ghost' : 'btn--primary' ?>">Open option as an estimate</button></div>
           </form>
         <?php elseif (!$options): ?>
@@ -131,7 +131,7 @@ $vehLabel = $vehicle ? trim(($vehicle['year'] ?: '') . ' ' . $vehicle['make'] . 
       </div>
       <div class="panel__body">
         <?php if (!$gate['ok']): ?>
-          <div class="alert alert--warn"><strong>Not ready.</strong> <?= e($gate['reason']) ?></div>
+          <div class="alert alert--warn" role="status"><strong>Not ready.</strong> <?= e($gate['reason']) ?></div>
         <?php else: ?>
           <form method="post" action="<?= url('diagnostics/' . $r['id'] . '/issue') ?>" class="row wrap">
             <?= csrf_field() ?>

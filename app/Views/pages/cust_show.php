@@ -7,10 +7,10 @@
       <?php if (!$srs): ?><div class="empty"><div class="empty__title">No jobs on file</div>
         <div class="empty__body">Nothing has been logged for this customer yet.</div></div>
       <?php else: ?>
-        <table class="tbl"><thead><tr><th>Status</th><th>Request</th><th>Service</th><th>Where</th><th class="right">When</th></tr></thead><tbody>
+        <table class="tbl"><thead><tr><th scope="col">Status</th><th scope="col">Request</th><th scope="col">Service</th><th scope="col">Where</th><th class="right" scope="col">When</th></tr></thead><tbody>
         <?php foreach ($srs as $r): ?>
           <tr data-href="<?= url('service-requests/' . $r['id']) ?>">
-            <td><?= badge($r['status']) ?></td><td class="docno"><?= e($r['doc_number']) ?></td>
+            <td><?= badge($r['status']) ?></td><td class="docno"><a class="row-link" href="<?= url('service-requests/' . $r['id']) ?>"><?= e($r['doc_number']) ?></a></td>
             <td><?= e(service_type_label($r['reported_service'])) ?></td>
             <td class="muted"><?= e($r['city'] ?: '—') ?></td>
             <td class="right muted text-sm nowrap"><?= e(fdate($r['created_at'])) ?></td>
@@ -25,10 +25,10 @@
       <div class="panel__body panel__body--flush">
       <?php if (!$invoices): ?><div class="panel__body muted text-sm">No invoices.</div>
       <?php else: ?>
-        <table class="tbl"><thead><tr><th>Status</th><th>Invoice</th><th>Issued</th><th class="right">Total</th><th class="right">Balance</th></tr></thead><tbody>
+        <table class="tbl"><thead><tr><th scope="col">Status</th><th scope="col">Invoice</th><th scope="col">Issued</th><th class="right" scope="col">Total</th><th class="right" scope="col">Balance</th></tr></thead><tbody>
         <?php foreach ($invoices as $r): ?>
           <tr data-href="<?= url('invoices/' . $r['id']) ?>">
-            <td><?= badge($r['status']) ?></td><td class="docno"><?= e($r['doc_number']) ?></td>
+            <td><?= badge($r['status']) ?></td><td class="docno"><a class="row-link" href="<?= url('invoices/' . $r['id']) ?>"><?= e($r['doc_number']) ?></a></td>
             <td class="muted text-sm"><?= e(fdate($r['issued_at'])) ?></td>
             <td class="right num"><?= money($r['total']) ?></td>
             <td class="right num strong"><?= money($r['balance_due']) ?></td>
@@ -44,18 +44,18 @@
         <form method="post" action="<?= url('customers/' . $c['id']) ?>">
           <?= csrf_field() ?>
           <div class="form-grid">
-            <div class="field col-span-2"><label>Who is the customer?</label>
-              <select class="select" name="customer_type" data-cust-type>
+            <div class="field col-span-2"><label for="customer_type">Who is the customer?</label>
+              <select class="select" name="customer_type" data-cust-type id="customer_type">
                 <?php foreach (customer_types() as $k => $label): ?>
                   <option value="<?= e($k) ?>" <?= $c['customer_type'] === $k ? 'selected' : '' ?>><?= e($label) ?></option>
                 <?php endforeach; ?>
               </select>
               <div class="hint">Fleet operator = the customer's business <em>is</em> vehicles (couriers, trucking, delivery).
                 A commercial business that merely owns several vehicles is Commercial.</div></div>
-            <div class="field col-span-2" data-when-cust="business"><label class="req">Company (the customer of record)</label>
-              <input class="input" name="company" value="<?= e($c['company']) ?>" data-cust-req="business"></div>
-            <div class="field" data-when-cust="business"><label>Payment terms</label>
-              <select class="select" name="payment_terms">
+            <div class="field col-span-2" data-when-cust="business"><label class="req" for="company">Company (the customer of record)</label>
+              <input class="input" name="company" value="<?= e($c['company']) ?>" data-cust-req="business" id="company"></div>
+            <div class="field" data-when-cust="business"><label for="payment_terms">Payment terms</label>
+              <select class="select" name="payment_terms" id="payment_terms">
                 <?php foreach (payment_terms_options() as $k => $label): ?>
                   <option value="<?= e($k) ?>" <?= ($c['payment_terms'] ?: 'DUE_ON_RECEIPT') === $k ? 'selected' : '' ?>><?= e($label) ?></option>
                 <?php endforeach; ?>
@@ -63,17 +63,17 @@
               <div class="hint">Net terms are a deliberate grant of credit. Changing them only affects future invoices — issued ones keep the terms they were created with.</div></div>
             <div class="field col-span-2 hide" data-when-cust="business">
               <div class="hint">The person below is the <strong>billing contact</strong> — optional, never the name on documents.</div></div>
-            <div class="field"><label>First name</label><input class="input" name="first_name" value="<?= e($c['first_name']) ?>" data-cust-req="person"></div>
-            <div class="field"><label>Last name</label><input class="input" name="last_name" value="<?= e($c['last_name']) ?>" data-cust-req="person"></div>
-            <div class="field col-span-2"><label>Email</label><input class="input" name="email" value="<?= e($c['email']) ?>"></div>
-            <div class="field col-span-2"><label>Address</label><input class="input" name="address_line1" value="<?= e($c['address_line1']) ?>"></div>
-            <div class="field"><label>City</label><input class="input" name="city" value="<?= e($c['city']) ?>"></div>
-            <div class="field"><label>State</label><input class="input" name="state" value="<?= e($c['state']) ?>" maxlength="2"></div>
-            <div class="field"><label>ZIP</label><input class="input" name="postal_code" value="<?= e($c['postal_code']) ?>"></div>
+            <div class="field"><label for="first_name">First name</label><input class="input" name="first_name" value="<?= e($c['first_name']) ?>" data-cust-req="person" id="first_name"></div>
+            <div class="field"><label for="last_name">Last name</label><input class="input" name="last_name" value="<?= e($c['last_name']) ?>" data-cust-req="person" id="last_name"></div>
+            <div class="field col-span-2"><label for="email">Email</label><input class="input" name="email" value="<?= e($c['email']) ?>" id="email"></div>
+            <div class="field col-span-2"><label for="address_line1">Address</label><input class="input" name="address_line1" value="<?= e($c['address_line1']) ?>" id="address_line1"></div>
+            <div class="field"><label for="city">City</label><input class="input" name="city" value="<?= e($c['city']) ?>" id="city"></div>
+            <div class="field"><label for="state">State</label><input class="input" name="state" value="<?= e($c['state']) ?>" maxlength="2" id="state"></div>
+            <div class="field"><label for="postal_code">ZIP</label><input class="input" name="postal_code" value="<?= e($c['postal_code']) ?>" id="postal_code"></div>
           </div>
           <label class="checkline"><input type="checkbox" name="sms_approved" value="1" <?= (int) $c['sms_approved'] === 1 ? 'checked' : '' ?>><span>SMS consent on file</span></label>
           <label class="checkline"><input type="checkbox" name="do_not_contact" value="1" <?= (int) $c['do_not_contact'] === 1 ? 'checked' : '' ?>><span>Do not contact — blocks every outbound message</span></label>
-          <div class="field mt4"><label>Notes</label><textarea class="textarea" name="notes"><?= e($c['notes']) ?></textarea></div>
+          <div class="field mt4"><label for="notes">Notes</label><textarea class="textarea" name="notes" id="notes"><?= e($c['notes']) ?></textarea></div>
           <button class="btn btn--primary">Save customer</button>
         </form>
       </div>

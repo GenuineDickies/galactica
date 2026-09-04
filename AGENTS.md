@@ -52,6 +52,25 @@ state change, with enough detail in the message to reconstruct what happened.
 - One glowing primary action per screen. If a screen has two obvious next steps,
   the screen is doing two jobs.
 - Navy is chrome. Amber, red and green are reserved for state — never decoration.
+- **Accessibility is a hard rule (WCAG 2.1 AA).** Fix-and-enforce prompt:
+  `docs/ACCESSIBILITY_PROMPT.md`; findings: `docs/ACCESSIBILITY_REVIEW_2026-09-03.md`.
+  1. Every control has a name a screen reader can say: `<label for>` + `id`, or the
+     input nested in the `<label>`. `placeholder` is never the only hint.
+  2. Everything a mouse can do, a keyboard can do: a clickable row contains a real
+     `<a>`; a pickable row contains a real `<button>`; modals trap focus and return it.
+  3. Anything that changes without a page load announces itself: status text and
+     flashes live in `aria-live` regions; PJAX moves focus to the new `<h1>`.
+  4. Phone pages (customer and technician) use `btn--lg` for the primary action —
+     44 px minimum; never `.btn--sm` for a state change.
+  5. Colour never carries meaning alone; every text/background token pair used for
+     normal text is ≥ 4.5:1 — new tokens go through the lint's pair list.
+  6. Decorative glyphs are `aria-hidden="true"`; `disabled` buttons say why in
+     visible text, not in `title`.
+  `php tests/a11y_lint.php` enforces the mechanical part (rules R1–R17, listed
+  at the top of the file) and is part of Definition of Done: 0 failed before any
+  change under `app/Views/` or `public/assets/` ships. New form fields go through
+  `field()` in `app/helpers.php`; a new text/background token pair goes into the
+  lint's `CONTRAST_PAIRS` list with the selector that uses it.
 
 ## Touching integrations or webhooks
 
@@ -116,7 +135,7 @@ tests/e2e.sh
 
 ## Definition of Done
 
-For PHP files you changed, run `php -l <file>` on each one and fix any syntax errors. Run the pure test suites that cover what you touched (`php tests/markup.php`, `php tests/ledger.php`, `php tests/line_tax.php`, …) before reporting done.
+For PHP files you changed, run `php -l <file>` on each one and fix any syntax errors. Run the pure test suites that cover what you touched (`php tests/markup.php`, `php tests/ledger.php`, `php tests/line_tax.php`, …) before reporting done. Any change under `app/Views/` or `public/assets/` also runs `php tests/a11y_lint.php` (see Writing views).
 
 If you discover a problem while working, FIX IT — do not report it and stop.
 

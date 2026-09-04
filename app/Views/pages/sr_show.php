@@ -81,9 +81,9 @@ $chain = ['Requested', 'Estimated', 'Authorized', 'Closed'];
 <div class="panel mb4">
   <div class="chain">
     <?php foreach ($chain as $i => $label): $n = $i + 1; ?>
-      <?php if ($i): ?><span class="chain__arrow">▸</span><?php endif; ?>
+      <?php if ($i): ?><span class="chain__arrow" aria-hidden="true">▸</span><?php endif; ?>
       <span class="chain__step <?= $n < $step ? 'is-done' : ($n === $step ? 'is-current' : '') ?>">
-        <?= $n < $step ? '✓' : '' ?><?= e($label) ?>
+        <?= $n < $step ? '<span aria-hidden="true">✓</span><span class="sr-only">Done: </span>' : ($n === $step ? '<span class="sr-only">Current step: </span>' : '') ?><?= e($label) ?>
       </span>
     <?php endforeach; ?>
   </div>
@@ -121,7 +121,7 @@ $chain = ['Requested', 'Estimated', 'Authorized', 'Closed'];
 </div>
 
 <?php if (!$customer && !$closed): ?>
-  <div class="alert alert--info">
+  <div class="alert alert--info" role="status">
     <div>
       <strong>Nothing here is verified yet.</strong>
       No customer record exists for this request, no vehicle is attached and nothing has been priced.
@@ -184,7 +184,7 @@ $chain = ['Requested', 'Estimated', 'Authorized', 'Closed'];
       <div class="panel__body panel__body--flush">
         <?php if (!$estimates): ?>
           <div class="empty">
-            <div class="empty__icon">▤</div>
+            <div class="empty__icon" aria-hidden="true">▤</div>
             <div class="empty__title">Nothing priced yet</div>
             <div class="empty__body">Promote this request to open an estimate. That is where the customer is confirmed, the work is priced and the authorization is captured.</div>
             <?php if (!$closed && Auth::is('ADMIN','DISPATCH')): ?>
@@ -193,12 +193,12 @@ $chain = ['Requested', 'Estimated', 'Authorized', 'Closed'];
           </div>
         <?php else: ?>
           <table class="tbl">
-            <thead><tr><th>Status</th><th>Estimate</th><th>Authorized by</th><th class="right">Total</th><th class="right">Opened</th></tr></thead>
+            <thead><tr><th scope="col">Status</th><th scope="col">Estimate</th><th scope="col">Authorized by</th><th class="right" scope="col">Total</th><th class="right" scope="col">Opened</th></tr></thead>
             <tbody>
             <?php foreach ($estimates as $x): ?>
               <tr data-href="<?= url('estimates/' . $x['id']) ?>">
                 <td><?= badge($x['status']) ?></td>
-                <td class="docno"><?= e($x['doc_number']) ?></td>
+                <td class="docno"><a class="row-link" href="<?= url('estimates/' . $x['id']) ?>"><?= e($x['doc_number']) ?></a></td>
                 <td class="muted"><?= e($x['authorized_by'] ?: '—') ?></td>
                 <td class="right num strong"><?= money($x['total']) ?></td>
                 <td class="right muted text-sm nowrap"><?= e(ago($x['created_at'])) ?></td>
@@ -215,7 +215,7 @@ $chain = ['Requested', 'Estimated', 'Authorized', 'Closed'];
       <div class="panel__body">
         <form method="post" action="<?= url('service-requests/' . $sr['id'] . '/notes') ?>">
           <?= csrf_field() ?>
-          <textarea class="textarea" name="intake_notes"><?= e($sr['intake_notes']) ?></textarea>
+          <textarea class="textarea" name="intake_notes" aria-label="Dispatcher notes"><?= e($sr['intake_notes']) ?></textarea>
           <div class="mt2"><button class="btn btn--sm">Save notes</button></div>
         </form>
       </div>
@@ -313,18 +313,18 @@ $chain = ['Requested', 'Estimated', 'Authorized', 'Closed'];
         <?php endif; ?>
 
         <?php if ($sr['location_captured_at']): ?>
-          <div class="alert alert--ok mb2"><div>
+          <div class="alert alert--ok mb2" role="status"><div>
             <strong>Position received <?= e(ago($sr['location_captured_at'])) ?> from the customer's phone.</strong>
             Their device reported it — the strongest answer available.
           </div></div>
         <?php elseif ($sr['latitude']): ?>
-          <div class="alert alert--info mb2"><div>
+          <div class="alert alert--info mb2" role="status"><div>
             <strong>Position set by dispatch.</strong>
             Worked out from the address or placed on the map by hand, not reported by the
             customer's phone. Text them a link below if you want their device to confirm it.
           </div></div>
         <?php elseif ($locOpen): ?>
-          <div class="alert alert--info mb2"><div>
+          <div class="alert alert--info mb2" role="status"><div>
             Link sent <?= $locOpen['sent_at'] ? e(ago($locOpen['sent_at'])) : 'just now' ?>,
             <?= $locOpen['viewed_at'] ? 'opened ' . e(ago($locOpen['viewed_at'])) : 'not opened yet' ?>.
             It expires <?= e(fdate($locOpen['expires_at'], 'g:i A')) ?>.
@@ -346,7 +346,7 @@ $chain = ['Requested', 'Estimated', 'Authorized', 'Closed'];
       <div class="panel__body">
         <form method="post" action="<?= url('service-requests/' . $sr['id'] . '/sms') ?>">
           <?= csrf_field() ?>
-          <select class="select mb2" name="template">
+          <select class="select mb2" name="template" aria-label="Message template">
             <option value="dispatch">Technician en route + ETA</option>
             <option value="on_site">Technician has arrived</option>
             <option value="optin">SMS opt-in confirmation</option>
@@ -376,8 +376,8 @@ $chain = ['Requested', 'Estimated', 'Authorized', 'Closed'];
         <form method="post" action="<?= url('service-requests/' . $sr['id'] . '/status') ?>">
           <?= csrf_field() ?>
           <input type="hidden" name="status" value="CANCELLED">
-          <div class="field"><label class="req">Cancellation reason</label>
-            <input class="input" name="close_reason" required placeholder="Customer got a jump from a passer-by">
+          <div class="field"><label class="req" for="close_reason">Cancellation reason</label>
+            <input class="input" name="close_reason" required placeholder="Customer got a jump from a passer-by" id="close_reason">
           </div>
           <button class="btn btn--danger btn--sm btn--block" data-confirm="Cancel this request?">Cancel request</button>
         </form>
@@ -392,10 +392,10 @@ $chain = ['Requested', 'Estimated', 'Authorized', 'Closed'];
 <?php /* A validation bounce (bad phone, gate, duplicate warning) re-opens the
          modal with everything the dispatcher typed still in place. */ ?>
 <div class="modal-bg <?= old_filled() ? 'is-open' : '' ?>" id="promoteModal">
-  <div class="modal panel">
+  <div class="modal panel" role="dialog" aria-modal="true" aria-labelledby="promoteModal_title">
     <div class="panel__head">
       <div>
-        <div class="panel__title">Promote to an estimate</div>
+        <div class="panel__title" id="promoteModal_title">Promote to an estimate</div>
         <div class="panel__sub">This is where the record stops being hearsay: confirm the customer, then price the work.</div>
       </div>
       <div class="topbar__spacer"></div>
@@ -414,7 +414,7 @@ $chain = ['Requested', 'Estimated', 'Authorized', 'Closed'];
               $isProviderJob = strtoupper((string) $sr['job_source']) === 'PROVIDER'; ?>
         <?php if ($isProviderJob): ?>
           <?php if ($provider): ?>
-            <div class="alert alert--info mb3">
+            <div class="alert alert--info mb3" role="status">
               <div><strong>Provider job — the invoice goes to <?= e($provider['company']) ?>.</strong>
                 They are the customer of record on this estimate; the caller is not made into a customer.
                 <?= e($reportedName ?: 'The caller') ?> stays on the request as reported, and the
@@ -423,7 +423,7 @@ $chain = ['Requested', 'Estimated', 'Authorized', 'Closed'];
                   carries onto the estimate as the PO number.<?php endif; ?></div>
             </div>
           <?php else: ?>
-            <div class="alert alert--danger mb3">
+            <div class="alert alert--danger mb3" role="status">
               <div><strong>No provider account chosen.</strong> This is a provider job, so the provider is
                 who the invoice goes to — pick the account under Edit details → Source before promoting,
                 or change the source to Retail if the motorist is paying.</div>
@@ -431,9 +431,9 @@ $chain = ['Requested', 'Estimated', 'Authorized', 'Closed'];
           <?php endif; ?>
         <?php else: ?>
         <div class="field" data-cust-picker>
-          <label>Existing customer</label>
+          <label for="cust_q">Existing customer</label>
           <input type="hidden" name="customer_id" value="">
-          <input class="input" type="text" data-cust-q data-endpoint="<?= url('customers/search') ?>"
+          <input class="input" type="text" id="cust_q" data-cust-q data-endpoint="<?= url('customers/search') ?>"
                  placeholder="Search by name, company or phone…" autocomplete="off">
           <div class="stack mt2 <?= $candidates ? '' : 'hide' ?>" data-cust-results>
             <?php foreach ($candidates as $c): ?>
@@ -450,24 +450,24 @@ $chain = ['Requested', 'Estimated', 'Authorized', 'Closed'];
 
         <div class="tag mb2">— or create the customer —</div>
         <div class="form-grid">
-          <div class="field col-span-full"><label>Who is the customer?</label>
-            <select class="select" name="customer_type" data-cust-type>
+          <div class="field col-span-full"><label for="customer_type">Who is the customer?</label>
+            <select class="select" name="customer_type" data-cust-type id="customer_type">
               <?php foreach (customer_types() as $k => $label): ?>
                 <option value="<?= e($k) ?>" <?= old('customer_type') === $k ? 'selected' : '' ?>><?= e($label) ?></option>
               <?php endforeach; ?>
             </select>
             <div class="hint">Fleet operator = their business <em>is</em> vehicles (couriers, trucking, delivery);
               a business that merely owns several vehicles is Commercial.</div></div>
-          <div class="field col-span-full" data-when-cust="business"><label class="req">Company (the customer of record)</label>
-            <input class="input" name="company" value="<?= e(old('company', $guessCompany)) ?>">
+          <div class="field col-span-full" data-when-cust="business"><label class="req" for="company">Company (the customer of record)</label>
+            <input class="input" name="company" value="<?= e(old('company', $guessCompany)) ?>" id="company">
             <div class="hint">Carried from the reported name — correct it to the legal business name.</div></div>
-          <div class="field"><label>First name</label><input class="input" name="first_name" value="<?= e(old('first_name', $guessFirst)) ?>"></div>
-          <div class="field"><label>Last name</label><input class="input" name="last_name" value="<?= e(old('last_name', $guessLast)) ?>"></div>
-          <div class="field"><label>Phone</label>
-            <input class="input" name="phone" data-mask="phone" value="<?= e(old('phone', $guessPhone)) ?>">
+          <div class="field"><label for="first_name">First name</label><input class="input" name="first_name" value="<?= e(old('first_name', $guessFirst)) ?>" id="first_name"></div>
+          <div class="field"><label for="last_name">Last name</label><input class="input" name="last_name" value="<?= e(old('last_name', $guessLast)) ?>" id="last_name"></div>
+          <div class="field"><label for="phone">Phone</label>
+            <input class="input" name="phone" data-mask="phone" value="<?= e(old('phone', $guessPhone)) ?>" id="phone">
             <div class="hint">Carried from the callback number. Required when creating a new record.</div>
           </div>
-          <div class="field"><label>Email</label><input class="input" name="email" type="email" value="<?= e(old('email')) ?>"></div>
+          <div class="field"><label for="email">Email</label><input class="input" name="email" type="email" value="<?= e(old('email')) ?>" id="email"></div>
         </div>
         <label class="checkline">
           <input type="checkbox" name="sms_approved" value="1" <?= (old_filled() ? old('sms_approved') : (int) $sr['comms_consent'] === 1) ? 'checked' : '' ?>>
@@ -483,21 +483,21 @@ $chain = ['Requested', 'Estimated', 'Authorized', 'Closed'];
         <div class="tag mb2 mt4">— confirm the work —</div>
         <div class="form-grid">
           <div class="field">
-            <label>Service</label>
-            <select class="select" name="service_type">
+            <label for="service_type">Service</label>
+            <select class="select" name="service_type" id="service_type">
               <?php foreach (service_types() as $k => $v): ?>
                 <option value="<?= e($k) ?>" <?= $k === old('service_type', (string) $sr['reported_service']) ? 'selected' : '' ?>><?= e($v) ?></option>
               <?php endforeach; ?>
             </select>
           </div>
-          <div class="field col-span-2"><label>Scope</label>
-            <textarea class="textarea" name="scope_summary" placeholder="Expected work to be performed"><?= e(old('scope_summary', (string) $sr['reported_problem'])) ?></textarea>
+          <div class="field col-span-2"><label for="scope_summary">Scope</label>
+            <textarea class="textarea" name="scope_summary" placeholder="Expected work to be performed" id="scope_summary"><?= e(old('scope_summary', (string) $sr['reported_problem'])) ?></textarea>
           </div>
         </div>
 
         <div class="tag mb2 mt4">— where the vehicle is —</div>
         <?php if (trim((string) $sr['reported_location']) !== ''): ?>
-          <div class="alert alert--info mb3">
+          <div class="alert alert--info mb3" role="status">
             <div><span class="strong">They said:</span> <?= e($sr['reported_location']) ?>
               <span class="faint">— their words, kept on the request. Turn it into an address below.</span></div>
           </div>
@@ -512,7 +512,7 @@ $chain = ['Requested', 'Estimated', 'Authorized', 'Closed'];
             'postal' => old('pin_postal', $guessAddress['postal'] !== '' ? $guessAddress['postal'] : (string) $sr['postal_code']),
         ]]); ?>
 
-        <div class="alert alert--info">
+        <div class="alert alert--info" role="status">
           <div>The estimate opens as a draft. Pricing, VIN capture and the customer authorization all happen there — and nothing dispatches until that authorization exists.</div>
         </div>
         <button class="btn btn--primary btn--block">Promote and open the estimate</button>
@@ -523,10 +523,10 @@ $chain = ['Requested', 'Estimated', 'Authorized', 'Closed'];
 
 <?php if (Auth::is('ADMIN','DISPATCH') && $sr['status'] === 'PENDING'): ?>
 <div class="modal-bg <?= $continueVehicle ? 'is-open' : '' ?>" id="editModal">
-  <div class="modal panel">
+  <div class="modal panel" role="dialog" aria-modal="true" aria-labelledby="editModal_title">
     <div class="panel__head">
       <div>
-        <div class="panel__title">Edit the reported details</div>
+        <div class="panel__title" id="editModal_title">Edit the reported details</div>
         <div class="panel__sub">Still hearsay — correct it freely. Every change lands on the audit trail.
           Editing locks once the request is promoted; after that, corrections belong on the estimate.</div>
       </div>
@@ -539,11 +539,11 @@ $chain = ['Requested', 'Estimated', 'Authorized', 'Closed'];
 
         <div class="tag mb2">— who and what —</div>
         <div class="form-grid">
-          <div class="field"><label>Name as given</label>
-            <input class="input" name="reported_name" value="<?= e($sr['reported_name']) ?>"></div>
-          <div class="field"><label>Callback number</label>
+          <div class="field"><label for="reported_name">Name as given</label>
+            <input class="input" name="reported_name" value="<?= e($sr['reported_name']) ?>" id="reported_name"></div>
+          <div class="field"><label for="reported_phone">Callback number</label>
             <input class="input" name="reported_phone" data-mask="phone"
-                   value="<?= e(phone_display($sr['reported_phone']) !== '—' ? phone_display($sr['reported_phone']) : $sr['reported_phone']) ?>"></div>
+                   value="<?= e(phone_display($sr['reported_phone']) !== '—' ? phone_display($sr['reported_phone']) : $sr['reported_phone']) ?>" id="reported_phone"></div>
           <?php /* Same order as intake: the kit first, then what that kit is
                    being sent to do. See sr_new.php. */
                 $srCat  = ServiceCategory::coerce(
@@ -555,7 +555,7 @@ $chain = ['Requested', 'Estimated', 'Authorized', 'Closed'];
                    to one nobody verified. */
                 $srLegacy = !isset(service_types()[$srType]) ? $srType : ''; ?>
           <div class="field">
-            <label>Roll as</label>
+            <label for="service_category">Roll as</label>
             <select class="select" name="service_category" id="service_category"
                     data-service-types="<?= e(json_encode(service_types_by_category())) ?>">
               <?php foreach (service_categories() as $k => $v): ?>
@@ -564,7 +564,7 @@ $chain = ['Requested', 'Estimated', 'Authorized', 'Closed'];
             </select>
           </div>
           <div class="field">
-            <label>Probably this service</label>
+            <label for="nature_of_service">Probably this service</label>
             <select class="select" name="reported_service" id="nature_of_service"
                     data-legacy-value="<?= e($srLegacy) ?>"
                     data-legacy-label="<?= e($srLegacy !== '' ? service_type_label($srLegacy) : '') ?>">
@@ -577,20 +577,20 @@ $chain = ['Requested', 'Estimated', 'Authorized', 'Closed'];
             </select>
           </div>
           <div class="field">
-            <label>Priority</label>
-            <select class="select" name="priority">
+            <label for="priority">Priority</label>
+            <select class="select" name="priority" id="priority">
               <?php foreach (['EMERGENCY' => 'Emergency', 'URGENT' => 'Urgent', 'STANDARD' => 'Standard', 'APPOINTMENT' => 'Appointment'] as $k => $v): ?>
                 <option value="<?= e($k) ?>" <?= $k === $sr['priority'] ? 'selected' : '' ?>><?= e($v) ?></option>
               <?php endforeach; ?>
             </select>
           </div>
           <div class="field">
-            <label>Promised ETA <span class="faint">(optional)</span></label>
-            <input class="input" name="promised_eta_time" type="time" step="900">
+            <label for="promised_eta_time">Promised ETA <span class="faint">(optional)</span></label>
+            <input class="input" name="promised_eta_time" type="time" step="900" id="promised_eta_time">
             <div class="hint">Blank keeps <?= $sr['promised_eta'] ? 'the current promise, ' . e(fdate($sr['promised_eta'], 'g:i A')) : 'no promise on record' ?>. Set a time only if you quoted the caller one — quarter-hour times.</div>
           </div>
-          <div class="field col-span-2"><label>The problem in their words</label>
-            <textarea class="textarea" name="reported_problem"><?= e($sr['reported_problem']) ?></textarea></div>
+          <div class="field col-span-2"><label for="reported_problem">The problem in their words</label>
+            <textarea class="textarea" name="reported_problem" id="reported_problem"><?= e($sr['reported_problem']) ?></textarea></div>
         </div>
         <label class="checkline">
           <input type="checkbox" name="comms_consent" value="1" <?= (int) $sr['comms_consent'] === 1 ? 'checked' : '' ?>>
@@ -600,17 +600,17 @@ $chain = ['Requested', 'Estimated', 'Authorized', 'Closed'];
         <div class="tag mb2 mt4">— where —</div>
         <?php $selState = $gpsGuess['state'] !== '' ? $gpsGuess['state'] : (string) $sr['state']; ?>
         <div class="form-grid">
-          <div class="field col-span-2"><label>Where they say they are</label>
-            <input class="input" name="reported_location" value="<?= e($sr['reported_location'] ?: $gpsGuess['loc']) ?>">
+          <div class="field col-span-2"><label for="reported_location">Where they say they are</label>
+            <input class="input" name="reported_location" value="<?= e($sr['reported_location'] ?: $gpsGuess['loc']) ?>" id="reported_location">
             <?php if ($gpsGuess['loc']): ?><div class="hint">Suggested from the GPS position the caller shared — edit freely, saving is what makes it the record.</div><?php endif; ?>
           </div>
-          <div class="field"><label>City</label><input class="input" name="city" value="<?= e($sr['city'] ?: $gpsGuess['city']) ?>"></div>
-          <div class="field"><label>State</label>
-            <select class="select" name="state">
+          <div class="field"><label for="city">City</label><input class="input" name="city" value="<?= e($sr['city'] ?: $gpsGuess['city']) ?>" id="city"></div>
+          <div class="field"><label for="state">State</label>
+            <select class="select" name="state" id="state">
               <?php foreach (us_states() as $s): ?><option <?= $s === $selState ? 'selected' : '' ?>><?= e($s) ?></option><?php endforeach; ?>
             </select>
           </div>
-          <div class="field"><label>ZIP</label><input class="input" name="postal_code" maxlength="10" value="<?= e($sr['postal_code'] ?: $gpsGuess['zip']) ?>"></div>
+          <div class="field"><label for="postal_code">ZIP</label><input class="input" name="postal_code" maxlength="10" value="<?= e($sr['postal_code'] ?: $gpsGuess['zip']) ?>" id="postal_code"></div>
         </div>
         <div class="hint">The GPS position isn't edited here — that only comes from the caller's own phone via a location link.</div>
 
@@ -621,15 +621,15 @@ $chain = ['Requested', 'Estimated', 'Authorized', 'Closed'];
             vehicle form opens pre-filled from it.</div>
         <?php endif; ?>
         <div class="form-grid form-grid--3" data-vehicle-picker data-vehicle-endpoint="<?= url('vehicles/options') ?>">
-          <div class="field"><label>Year</label>
-            <input class="input" name="v_year" type="number" min="1900" max="<?= date('Y') + 1 ?>" value="<?= e((string) ($sr['v_year'] ?? '')) ?>" data-veh="year"></div>
-          <div class="field"><label>Make</label>
-            <input class="input" name="v_make" value="<?= e($sr['v_make']) ?>" <?= $continueVehicle ? 'data-scroll-focus' : '' ?> data-veh="make"></div>
-          <div class="field"><label>Model</label><input class="input" name="v_model" value="<?= e($sr['v_model']) ?>" data-veh="model"></div>
-          <div class="field"><label>Colour</label><input class="input" name="v_color" value="<?= e($sr['v_color']) ?>"></div>
-          <div class="field"><label>Plate</label><input class="input" name="v_plate" style="text-transform:uppercase" value="<?= e($sr['v_plate']) ?>"></div>
-          <div class="field"><label>Plate state</label>
-            <select class="select" name="v_plate_state">
+          <div class="field"><label for="v_year">Year</label>
+            <input class="input" name="v_year" type="number" min="1900" max="<?= date('Y') + 1 ?>" value="<?= e((string) ($sr['v_year'] ?? '')) ?>" data-veh="year" id="v_year"></div>
+          <div class="field"><label for="v_make">Make</label>
+            <input class="input" name="v_make" value="<?= e($sr['v_make']) ?>" <?= $continueVehicle ? 'data-scroll-focus' : '' ?> data-veh="make" id="v_make"></div>
+          <div class="field"><label for="v_model">Model</label><input class="input" name="v_model" value="<?= e($sr['v_model']) ?>" data-veh="model" id="v_model"></div>
+          <div class="field"><label for="v_color">Colour</label><input class="input" name="v_color" value="<?= e($sr['v_color']) ?>" id="v_color"></div>
+          <div class="field"><label for="v_plate">Plate</label><input class="input" name="v_plate" style="text-transform:uppercase" value="<?= e($sr['v_plate']) ?>" id="v_plate"></div>
+          <div class="field"><label for="v_plate_state">Plate state</label>
+            <select class="select" name="v_plate_state" id="v_plate_state">
               <option value="">—</option>
               <?php foreach (us_states() as $s): ?><option <?= $s === $sr['v_plate_state'] ? 'selected' : '' ?>><?= e($s) ?></option><?php endforeach; ?>
             </select>
@@ -639,16 +639,16 @@ $chain = ['Requested', 'Estimated', 'Authorized', 'Closed'];
         <div class="tag mb2 mt4">— source —</div>
         <div class="form-grid">
           <div class="field">
-            <label>How did it come in</label>
-            <select class="select" name="channel">
+            <label for="channel">How did it come in</label>
+            <select class="select" name="channel" id="channel">
               <?php foreach (['PHONE' => 'Phone call', 'WEB' => 'Website form', 'SMS' => 'Text message', 'PROVIDER_API' => 'Provider — electronic dispatch', 'WALK_IN' => 'Walk-up'] as $k => $v): ?>
                 <option value="<?= e($k) ?>" <?= $k === $sr['channel'] ? 'selected' : '' ?>><?= e($v) ?></option>
               <?php endforeach; ?>
             </select>
           </div>
           <div class="field">
-            <label>Job source</label>
-            <select class="select" name="job_source" data-job-source>
+            <label for="job_source">Job source</label>
+            <select class="select" name="job_source" data-job-source id="job_source">
               <option value="RETAIL" <?= $sr['job_source'] === 'RETAIL' ? 'selected' : '' ?>>Retail — direct customer</option>
               <option value="PROVIDER" <?= $sr['job_source'] === 'PROVIDER' ? 'selected' : '' ?>>Provider / bulk referral</option>
             </select>
@@ -660,16 +660,16 @@ $chain = ['Requested', 'Estimated', 'Authorized', 'Closed'];
                    with both changes named on the audit trail. */
                 $provHide = $sr['job_source'] === 'PROVIDER' ? '' : ' hide'; ?>
           <div class="field<?= $provHide ?>" data-when-source="PROVIDER">
-            <label>Provider account</label>
-            <select class="select" name="provider_id">
+            <label for="provider_id">Provider account</label>
+            <select class="select" name="provider_id" id="provider_id">
               <option value="">—</option>
               <?php foreach ($providers as $p): ?>
                 <option value="<?= (int) $p['id'] ?>" <?= (int) $p['id'] === (int) $sr['provider_id'] ? 'selected' : '' ?>><?= e($p['company']) ?></option>
               <?php endforeach; ?>
             </select>
           </div>
-          <div class="field<?= $provHide ?>" data-when-source="PROVIDER"><label>Provider claim / PO ref</label>
-            <input class="input" name="provider_ref" value="<?= e($sr['provider_ref']) ?>"></div>
+          <div class="field<?= $provHide ?>" data-when-source="PROVIDER"><label for="provider_ref">Provider claim / PO ref</label>
+            <input class="input" name="provider_ref" value="<?= e($sr['provider_ref']) ?>" id="provider_ref"></div>
         </div>
 
         <button class="btn btn--primary btn--block">Save changes</button>
@@ -680,14 +680,14 @@ $chain = ['Requested', 'Estimated', 'Authorized', 'Closed'];
 <?php endif; ?>
 
 <div class="modal-bg" id="rejectModal">
-  <div class="modal panel">
-    <div class="panel__head"><div class="panel__title">Reject this request</div><div class="topbar__spacer"></div>
+  <div class="modal panel" role="dialog" aria-modal="true" aria-labelledby="rejectModal_title">
+    <div class="panel__head"><div class="panel__title" id="rejectModal_title">Reject this request</div><div class="topbar__spacer"></div>
       <button class="btn btn--ghost btn--sm" data-modal-close type="button">Close</button></div>
     <div class="panel__body">
       <form method="post" action="<?= url('service-requests/' . $sr['id'] . '/status') ?>">
         <?= csrf_field() ?><input type="hidden" name="status" value="REJECTED">
-        <div class="field"><label class="req">Why are we declining?</label>
-          <input class="input" name="close_reason" required placeholder="Outside service area / requires a tow">
+        <div class="field"><label class="req" for="close_reason_reject">Why are we declining?</label>
+          <input class="input" name="close_reason" required placeholder="Outside service area / requires a tow" id="close_reason_reject">
         </div>
         <button class="btn btn--danger btn--block">Reject request</button>
       </form>

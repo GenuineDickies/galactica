@@ -120,6 +120,12 @@ final class Lines
 
         $lineNo = (int) Db::val('SELECT COALESCE(MAX(line_no),0) FROM doc_lines WHERE doc_type = ? AND doc_id = ?', [$docType, $docId]) + 1;
         $qty    = max(0.0, $qty);
+        /* A price or cost below zero is not a credit, it is a way to lower a
+         * total without tripping the variance gate. Credits are their own
+         * lines with their own audit trail; this one refuses. */
+        if (($priceOverride !== null && $priceOverride < 0) || ($costOverride !== null && $costOverride < 0)) {
+            throw new RuntimeException('Prices and costs cannot be negative. Record a credit or discount instead.');
+        }
 
         /* A core charge is held per physical unit, and the ledger multiplies
          * it by a WHOLE-number qty — a fractional qty here would bill one
@@ -1181,7 +1187,7 @@ final class Rules
         foreach ($sibs as $s) {
             if (!empty($s['authorized_at'])) {
                 return ['ok' => false, 'siblings' => [],
-                        'reason' => 'The customer already chose ' . ($s['option_label'] ?: $s['doc_number'])
+                        'reason' => 'The customer already chose ' . e($s['option_label'] ?: $s['doc_number'])
                                   . ' on this diagnostic report. One option per report — decline that one first if they changed their mind.'];
             }
         }

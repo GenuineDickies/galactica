@@ -2,8 +2,8 @@
 <div class="panel mb4">
   <div class="panel__body">
     <form method="get" class="row wrap">
-      <input class="input" name="q" value="<?= e($q) ?>" placeholder="Search by number, reported name, phone or location…" style="max-width:340px">
-      <select class="select" name="status" style="max-width:190px">
+      <input class="input" name="q" aria-label="Search service requests" value="<?= e($q) ?>" placeholder="Search by number, reported name, phone or location…" style="max-width:340px">
+      <select class="select" name="status" aria-label="Status" style="max-width:190px">
         <option value="">All statuses</option>
         <?php foreach (ServiceRequestController::STATUSES as $s): ?>
           <option value="<?= e($s) ?>" <?= $status === $s ? 'selected' : '' ?>><?= e(status_label($s)) ?></option>
@@ -22,7 +22,7 @@
   <div class="panel__body panel__body--flush">
     <?php if (!$rows): ?>
       <div class="empty">
-        <div class="empty__icon">☎</div>
+        <div class="empty__icon" aria-hidden="true">☎</div>
         <div class="empty__title">No requests match</div>
         <div class="empty__body">Either nothing has been logged yet, or the filter is too narrow. Clear the filter to see everything.</div>
         <button class="btn btn--primary" data-url="<?= url('service-requests/new') ?>">New Service Request</button>
@@ -30,13 +30,13 @@
     <?php else: ?>
     <div class="table-wrap"><table class="tbl">
       <thead><tr>
-        <th>Status</th><th>Request</th><th>Reported by</th><th>Reported need</th><th>Source</th><th>Location</th><th>Priority</th><th class="right">Logged</th>
+        <th scope="col">Status</th><th scope="col">Request</th><th scope="col">Reported by</th><th scope="col">Reported need</th><th scope="col">Source</th><th scope="col">Location</th><th scope="col">Priority</th><th class="right" scope="col">Logged</th>
       </tr></thead>
       <tbody>
       <?php foreach ($rows as $r): ?>
         <tr data-href="<?= url('service-requests/' . $r['id']) ?>">
           <td><?= badge($r['status']) ?></td>
-          <td class="docno nowrap"><?= e($r['doc_number']) ?></td>
+          <td class="docno nowrap"><a class="row-link" href="<?= url('service-requests/' . $r['id']) ?>"><?= e($r['doc_number']) ?></a></td>
           <td class="strong"><?= e($r['reported_name'] ?: '—') ?>
             <div class="text-sm faint"><?= e(phone_display($r['reported_phone'])) ?></div></td>
           <td><?= e(service_type_label($r['reported_service'])) ?></td>

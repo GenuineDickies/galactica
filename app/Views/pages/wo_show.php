@@ -26,9 +26,9 @@ $smsOk    = Sms::gate($customer)['ok'];
     $cur  = array_search($wo['status'], $flow, true);
     if ($cur === false) { $cur = count($flow) - 1; }
     foreach ($flow as $i => $s): ?>
-      <?php if ($i): ?><span class="chain__arrow">▸</span><?php endif; ?>
+      <?php if ($i): ?><span class="chain__arrow" aria-hidden="true">▸</span><?php endif; ?>
       <span class="chain__step <?= $i < $cur ? 'is-done' : ($i === $cur ? 'is-current' : '') ?>">
-        <?= $i < $cur ? '✓' : '' ?><?= e(status_label($s)) ?>
+        <?= $i < $cur ? '<span aria-hidden="true">✓</span><span class="sr-only">Done: </span>' : ($i === $cur ? '<span class="sr-only">Current step: </span>' : '') ?><?= e(status_label($s)) ?>
       </span>
     <?php endforeach; ?>
   </div>
@@ -77,7 +77,7 @@ $smsOk    = Sms::gate($customer)['ok'];
 </div>
 
 <?php if ($sigOwed): ?>
-  <div class="alert alert--danger gate">
+  <div class="alert alert--danger gate" role="status">
     <div>
       <strong>Do not begin work — the customer has not authorized it.</strong>
       <?= e($est['doc_number']) ?> totals <?= money((float) $est['total']) ?>, over the <?= money(Rules::cfg('authorization_threshold')) ?> threshold,
@@ -114,7 +114,7 @@ $smsOk    = Sms::gate($customer)['ok'];
 <?php endif; ?>
 
 <?php if (!$done && Rules::workAuthSigned($wo)): ?>
-  <div class="alert alert--ok">
+  <div class="alert alert--ok" role="status">
     <div>
       <strong>Authorized by <?= e($wo['auth_signer_name']) ?> — <?= e(fdatetime($wo['auth_signed_at'])) ?>.</strong>
       <?= $wo['auth_method'] === 'SMS' ? 'Signed remotely from a texted link' : 'Signed in person on this device' ?><?= $wo['auth_ip'] ? ' · IP ' . e($wo['auth_ip']) : '' ?>.
@@ -129,7 +129,7 @@ $smsOk    = Sms::gate($customer)['ok'];
          moment the VIN is physically capturable. The gate itself is
          unchanged: completion and invoicing still refuse without a VIN. */ ?>
 <?php if (!$gate['ok'] && in_array($wo['status'], ['ON_SITE', 'IN_PROGRESS'], true)): ?>
-  <div class="alert alert--warn gate">
+  <div class="alert alert--warn gate" role="status">
     <div>
       <strong>VIN required.</strong> <?= e($gate['reason']) ?>
       Capturing the VIN is the driver's job, not the customer's — this job cannot be completed or billed without it.
@@ -139,7 +139,7 @@ $smsOk    = Sms::gate($customer)['ok'];
 <?php endif; ?>
 
 <?php if ($wo['status'] === 'NO_SHOW'): ?>
-  <div class="alert alert--danger">
+  <div class="alert alert--danger" role="status">
     <div><strong>Customer no-show.</strong> A trip or no-show fee is still billable — add <code>FEE-NOSHOW</code> and invoice it. Attach a photo showing arrival before closing.</div>
   </div>
 <?php endif; ?>
@@ -161,8 +161,8 @@ $smsOk    = Sms::gate($customer)['ok'];
           <label style="white-space:nowrap;display:flex;align-items:center;gap:4px">
             <input type="checkbox" name="send_sms" value="1" checked <?= $wo['status'] === 'EN_ROUTE' ? 'disabled' : '' ?>> Text customer, arriving in
           </label>
-          <input class="input" name="eta_minutes" type="number" min="1" max="720" placeholder="—" style="width:70px" <?= $wo['status'] === 'EN_ROUTE' ? 'disabled' : '' ?>>
-          <span class="hint">minutes (blank texts &ldquo;shortly&rdquo;)</span>
+          <input class="input" name="eta_minutes" id="eta_minutes" type="number" min="1" max="720" placeholder="—" style="width:70px" aria-describedby="eta_minutes_hint" <?= $wo['status'] === 'EN_ROUTE' ? 'disabled' : '' ?>>
+          <label class="hint" for="eta_minutes" id="eta_minutes_hint" style="margin:0;font-size:var(--fs-sm);font-weight:400;letter-spacing:normal;text-transform:none;display:inline">minutes (blank texts &ldquo;shortly&rdquo;)</label>
           <?php if ($wo['tech_latitude']): ?>
             <button class="btn btn--sm" type="button"
                     data-eta-suggest="<?= url('work-orders/' . $wo['id'] . '/eta-suggest') ?>">Suggest from route</button>
@@ -182,7 +182,10 @@ $smsOk    = Sms::gate($customer)['ok'];
           <form method="post" action="<?= url('work-orders/' . $wo['id'] . '/status') ?>">
             <?= csrf_field() ?><input type="hidden" name="status" value="IN_PROGRESS">
             <button class="btn btn--sm" <?= ($wo['status'] === 'IN_PROGRESS' || $blocked) ? 'disabled' : '' ?>
-                    <?= $blocked ? 'title="The customer must authorize this work order first"' : '' ?>>Begin work</button>
+                    <?= $blocked ? 'aria-describedby="why-begin"' : '' ?>>Begin work</button>
+            <?php if ($blocked): ?>
+              <div class="why" id="why-begin">The customer must authorize this work order first.</div>
+            <?php endif; ?>
           </form>
           <form method="post" action="<?= url('work-orders/' . $wo['id'] . '/status') ?>">
             <?= csrf_field() ?><input type="hidden" name="status" value="NO_SHOW">
@@ -222,7 +225,7 @@ $smsOk    = Sms::gate($customer)['ok'];
 
     <?php if ($est): ?>
       <?php $delta = (float) $totals['total'] - (float) $est['total']; $tr = Rules::varianceThreshold((float) $est['total']); ?>
-      <div class="alert <?= abs($delta) > $tr ? 'alert--warn' : 'alert--info' ?>">
+      <div class="alert <?= abs($delta) > $tr ? 'alert--warn' : 'alert--info' ?>" role="status">
         <div>
           <strong>Approved scope: <?= money($est['total']) ?> · currently on this work order: <?= money($totals['total']) ?>.</strong>
           <?php if (abs($delta) > $tr): ?>
@@ -271,7 +274,7 @@ $smsOk    = Sms::gate($customer)['ok'];
           <div class="grid grid--3 mb4">
             <?php foreach ($photos as $p): ?>
               <div>
-                <img src="<?= url($p['stored_path']) ?>" alt="<?= e($p['label']) ?>" style="width:100%;border-radius:var(--r-md);border:1px solid var(--line)">
+                <img src="<?= e(url($p['stored_path'])) ?>" alt="<?= e($p['label']) ?>" style="width:100%;border-radius:var(--r-md);border:1px solid var(--line)">
                 <div class="text-sm faint mt2"><?= e($p['label']) ?> · <?= e($p['filename']) ?></div>
               </div>
             <?php endforeach; ?>
@@ -282,11 +285,13 @@ $smsOk    = Sms::gate($customer)['ok'];
         <?php if (!$done): ?>
         <form method="post" action="<?= url('work-orders/' . $wo['id'] . '/photo') ?>" enctype="multipart/form-data" class="row wrap">
           <?= csrf_field() ?>
-          <select class="select" name="label" style="max-width:150px">
+          <label class="sr-only" for="photo_label">Photo type</label>
+          <select class="select" name="label" id="photo_label" style="max-width:150px">
             <option value="PRE">Before</option><option value="POST">After</option>
             <option value="PART">Part</option><option value="SITE">Site</option><option value="DAMAGE">Damage</option>
           </select>
-          <input class="input" type="file" name="photo" accept="image/*" capture="environment" style="max-width:260px">
+          <label class="sr-only" for="photo_file">Photo file</label>
+          <input class="input" type="file" name="photo" id="photo_file" accept="image/*" capture="environment" style="max-width:260px">
           <button class="btn btn--sm">Attach photo</button>
         </form>
         <?php endif; ?>
@@ -314,8 +319,8 @@ $smsOk    = Sms::gate($customer)['ok'];
           <form method="post" action="<?= url('work-orders/' . $wo['id'] . '/assign') ?>">
             <?= csrf_field() ?>
             <div class="field">
-              <label class="req">Technician</label>
-              <select class="select" name="technician_id" required>
+              <label class="req" for="technician_id">Technician</label>
+              <select class="select" name="technician_id" required id="technician_id">
                 <option value="">— pick a technician —</option>
                 <?php foreach ($techs as $t): ?>
                   <option value="<?= (int) $t['id'] ?>" <?= (int) $wo['technician_id'] === (int) $t['id'] ? 'selected' : '' ?>>
@@ -345,7 +350,7 @@ $smsOk    = Sms::gate($customer)['ok'];
         <?php if (Auth::is('ADMIN','DISPATCH') && !$done): ?>
           <form method="post" action="<?= url('work-orders/' . $wo['id'] . '/po') ?>" class="row mt4">
             <?= csrf_field() ?>
-            <input class="input" name="po_number" value="<?= e($wo['po_number']) ?>" placeholder="PO number" maxlength="64">
+            <input class="input" name="po_number" aria-label="PO number" value="<?= e($wo['po_number']) ?>" placeholder="PO number" maxlength="64">
             <button class="btn btn--sm">Save</button>
           </form>
         <?php elseif ($wo['po_number']): ?>
@@ -377,15 +382,16 @@ $smsOk    = Sms::gate($customer)['ok'];
           <form method="post" action="<?= url('work-orders/' . $wo['id'] . '/category') ?>" class="mt4">
             <?= csrf_field() ?>
             <div class="field">
-              <label>Change to</label>
-              <select class="select" name="service_category">
+              <label for="service_category">Change to</label>
+              <select class="select" name="service_category" id="service_category">
                 <?php foreach (service_categories() as $k => $v): ?>
                   <option value="<?= e($k) ?>" <?= $k === $woCat ? 'selected' : '' ?>><?= e($v) ?></option>
                 <?php endforeach; ?>
               </select>
             </div>
             <div class="field">
-              <input class="input" name="why" maxlength="120" placeholder="Why, in a few words — e.g. sidewall, had to demount">
+              <label class="sr-only" for="why_category">Reason for the category change</label>
+              <input class="input" name="why" id="why_category" maxlength="120" placeholder="Why, in a few words — e.g. sidewall, had to demount">
             </div>
             <button class="btn btn--sm">Save category</button>
           </form>
@@ -443,7 +449,7 @@ $smsOk    = Sms::gate($customer)['ok'];
     <div class="panel">
       <div class="panel__head"><div class="panel__title">Completion signature</div></div>
       <div class="panel__body">
-        <img src="<?= e($wo['signature_data']) ?>" style="width:100%;background:#0a1120;border-radius:var(--r-md);border:1px solid var(--line)" alt="signature">
+        <img src="<?= e($wo['signature_data']) ?>" style="width:100%;background:#0a1120;border-radius:var(--r-md);border:1px solid var(--line)" alt="Signature of <?= e($wo['signer_name'] ?: 'the customer') ?>">
         <div class="hint"><?= e($wo['signer_name']) ?> · <?= e(fdatetime($wo['signed_at'])) ?></div>
       </div>
     </div>
@@ -452,9 +458,9 @@ $smsOk    = Sms::gate($customer)['ok'];
 </div>
 
 <div class="modal-bg" id="completeModal" data-customer-facing>
-  <div class="modal panel">
+  <div class="modal panel" role="dialog" aria-modal="true" aria-labelledby="completeModal_title">
     <div class="panel__head">
-      <div><div class="panel__title">Close out this work order</div>
+      <div><div class="panel__title" id="completeModal_title">Close out this work order</div>
       <div class="panel__sub">Record what actually happened — this is the field record, not the estimate.</div></div>
       <div class="topbar__spacer"></div>
       <button class="btn btn--ghost btn--sm" data-modal-close type="button">Close</button>
@@ -463,18 +469,18 @@ $smsOk    = Sms::gate($customer)['ok'];
       <form method="post" action="<?= url('work-orders/' . $wo['id'] . '/complete') ?>">
         <?= csrf_field() ?>
         <div class="field">
-          <label class="req">Outcome</label>
-          <select class="select" name="outcome_code" required>
+          <label class="req" for="outcome_code">Outcome</label>
+          <select class="select" name="outcome_code" required id="outcome_code">
             <?php foreach (WorkOrderController::OUTCOMES as $k => $v): ?><option value="<?= e($k) ?>"><?= e($v) ?></option><?php endforeach; ?>
           </select>
           <div class="hint">An unsuccessful attempt is still billable — the service fee applies regardless of outcome.</div>
         </div>
         <div class="form-grid">
-          <div class="field"><label>Odometer</label><input class="input" name="odometer" type="number"></div>
-          <div class="field"><label>Signed by</label><input class="input" name="signer_name" placeholder="<?= e($custName) ?>"></div>
+          <div class="field"><label for="odometer">Odometer</label><input class="input" name="odometer" type="number" id="odometer"></div>
+          <div class="field"><label for="signer_name">Signed by</label><input class="input" name="signer_name" placeholder="<?= e($custName) ?>" id="signer_name"></div>
         </div>
-        <div class="field"><label>What was done</label>
-          <textarea class="textarea" name="field_notes" placeholder="Battery tested at 9.8V under load — failed. Jump started, advised replacement."><?= e($wo['field_notes']) ?></textarea>
+        <div class="field"><label for="field_notes">What was done</label>
+          <textarea class="textarea" name="field_notes" placeholder="Battery tested at 9.8V under load — failed. Jump started, advised replacement." id="field_notes"><?= e($wo['field_notes']) ?></textarea>
         </div>
         <?php View::partial('partials/signature_field', [
           'id'       => 'woSig',
@@ -488,9 +494,9 @@ $smsOk    = Sms::gate($customer)['ok'];
                  agree the job was done well. But it cannot be left silently
                  blank either — either a signature or a reason. */ ?>
         <div class="field">
-          <label>If unsigned, why</label>
+          <label for="unsigned_reason">If unsigned, why</label>
           <input class="input" name="unsigned_reason"
-                 placeholder="Customer left before completion / declined to sign / vehicle unattended">
+                 placeholder="Customer left before completion / declined to sign / vehicle unattended" id="unsigned_reason">
           <div class="hint">Required only when there is no signature above.</div>
         </div>
 
@@ -515,9 +521,9 @@ $smsOk    = Sms::gate($customer)['ok'];
 </div>
 
 <div class="modal-bg" id="vinModal">
-  <div class="modal panel">
+  <div class="modal panel" role="dialog" aria-modal="true" aria-labelledby="vinModal_title">
     <div class="panel__head">
-      <div><div class="panel__title">Capture VIN</div><div class="panel__sub">Driver responsibility. Read it off the dash plate or door jamb.</div></div>
+      <div><div class="panel__title" id="vinModal_title">Capture VIN</div><div class="panel__sub">Driver responsibility. Read it off the dash plate or door jamb.</div></div>
       <div class="topbar__spacer"></div>
       <button class="btn btn--ghost btn--sm" data-modal-close type="button">Close</button>
     </div>
@@ -528,14 +534,14 @@ $smsOk    = Sms::gate($customer)['ok'];
           <label class="req" for="wo_vin">VIN</label>
              <input class="input" id="wo_vin" name="vin" data-vin maxlength="17"
                  style="font-family:var(--mono);letter-spacing:.08em;font-size:16px" placeholder="1HGCM82633A004352">
-             <div class="hint" data-vin-hint="wo_vin">Enter the VIN, or enter a plate below to find an existing VIN record. New records require a valid VIN.</div>
+             <div class="hint" data-vin-hint="wo_vin" aria-live="polite">Enter the VIN, or enter a plate below to find an existing VIN record. New records require a valid VIN.</div>
         </div>
         <div class="form-grid form-grid--3" data-vehicle-picker data-vehicle-endpoint="<?= url('vehicles/options') ?>">
-          <div class="field"><label>Year</label><input class="input" name="year" type="number" value="<?= e($sr['v_year']) ?>" data-veh="year"></div>
-          <div class="field"><label>Make</label><input class="input" name="make" value="<?= e($sr['v_make']) ?>" data-veh="make"></div>
-          <div class="field"><label>Model</label><input class="input" name="model" value="<?= e($sr['v_model']) ?>" data-veh="model"></div>
-          <div class="field"><label>Plate (lookup only)</label><input class="input" name="plate" style="text-transform:uppercase" value="<?= e($sr['v_plate']) ?>"></div>
-          <div class="field"><label>Plate state</label><input class="input" name="plate_state" maxlength="2" style="text-transform:uppercase" value="<?= e($sr['v_plate_state']) ?>"></div>
+          <div class="field"><label for="year">Year</label><input class="input" name="year" type="number" value="<?= e($sr['v_year']) ?>" data-veh="year" id="year"></div>
+          <div class="field"><label for="make">Make</label><input class="input" name="make" value="<?= e($sr['v_make']) ?>" data-veh="make" id="make"></div>
+          <div class="field"><label for="model">Model</label><input class="input" name="model" value="<?= e($sr['v_model']) ?>" data-veh="model" id="model"></div>
+          <div class="field"><label for="plate">Plate (lookup only)</label><input class="input" name="plate" style="text-transform:uppercase" value="<?= e($sr['v_plate']) ?>" id="plate"></div>
+          <div class="field"><label for="plate_state">Plate state</label><input class="input" name="plate_state" maxlength="2" style="text-transform:uppercase" value="<?= e($sr['v_plate_state']) ?>" id="plate_state"></div>
         </div>
         <label class="checkline"><input type="checkbox" name="no_plate" value="1"><span>No plate on this vehicle</span></label>
         <button class="btn btn--primary btn--block">Save VIN</button>
@@ -546,17 +552,17 @@ $smsOk    = Sms::gate($customer)['ok'];
 
 <?php if ($sigOwed): ?>
 <div class="modal-bg" id="signModal" data-customer-facing>
-  <div class="modal panel">
+  <div class="modal panel" role="dialog" aria-modal="true" aria-labelledby="signModal_title">
     <div class="panel__head">
       <div>
-        <div class="panel__title">Display for customer</div>
+        <div class="panel__title" id="signModal_title">Display for customer</div>
         <div class="panel__sub">Hand them the device. Work may not begin until this is signed.</div>
       </div>
       <div class="topbar__spacer"></div>
       <button class="btn btn--ghost btn--sm" data-modal-close type="button">Close</button>
     </div>
     <div class="panel__body">
-      <div class="alert alert--warn">
+      <div class="alert alert--warn" role="status">
         <div>
           Work order <?= e($wo['doc_number']) ?> · <?= money((float) $totals['total']) ?>.
           Let the customer read the line items below before they sign. If the job has grown
@@ -567,7 +573,7 @@ $smsOk    = Sms::gate($customer)['ok'];
       <?php /* The customer's read of the scope, price only. Cost and profit
                columns on the page behind are hidden while this modal is open. */ ?>
       <div class="table-wrap mb4"><table class="tbl">
-        <thead><tr><th>Item</th><th class="right">Qty</th><th class="right">Price</th><th class="right">Total</th></tr></thead>
+        <thead><tr><th scope="col">Item</th><th class="right" scope="col">Qty</th><th class="right" scope="col">Price</th><th class="right" scope="col">Total</th></tr></thead>
         <tbody>
         <?php foreach ($lines as $l): ?>
           <tr><td class="strong"><?= e($l['name']) ?><?php if ($l['notes']): ?><div class="text-sm faint"><?= e($l['notes']) ?></div><?php endif; ?></td>
@@ -582,8 +588,8 @@ $smsOk    = Sms::gate($customer)['ok'];
       <form method="post" action="<?= url('work-orders/' . $wo['id'] . '/sign') ?>" data-sig-required>
         <?= csrf_field() ?>
         <div class="field">
-          <label class="req">Name of the person signing</label>
-          <input class="input" name="signer_name" required placeholder="<?= e($custName) ?>">
+          <label class="req" for="signer_name_sign">Name of the person signing</label>
+          <input class="input" name="signer_name" required placeholder="<?= e($custName) ?>" id="signer_name_sign">
         </div>
         <?php View::partial('partials/signature_field', [
           'id'       => 'woAuthSig',

@@ -37,7 +37,8 @@ $title    = $title    ?? 'Customer signature';
 $subtitle = $subtitle ?? '';
 ?>
 <div class="field">
-  <label <?= $required ? 'class="req"' : '' ?>><?= e($label) ?></label>
+  <?php /* The trigger button is the control; the label names it. */ ?>
+  <label <?= $required ? 'class="req"' : '' ?> for="<?= e($id) ?>_open"><?= e($label) ?></label>
 
   <div class="sigfield" id="<?= e($id) ?>"
        data-sigfield
@@ -45,7 +46,8 @@ $subtitle = $subtitle ?? '';
        data-title="<?= e($title) ?>"
        data-subtitle="<?= e($subtitle) ?>">
 
-    <button type="button" class="btn btn--block sigfield__trigger" data-sig-open>
+    <button type="button" class="btn btn--block btn--lg sigfield__trigger" id="<?= e($id) ?>_open" data-sig-open
+            aria-describedby="<?= e($id) ?>_hint">
       Click here to sign
     </button>
 
@@ -60,7 +62,5 @@ $subtitle = $subtitle ?? '';
 
   <input type="hidden" id="<?= e($id) ?>_data" name="<?= e($name) ?>">
 
-  <?php if ($hint !== ''): ?>
-    <div class="hint mt2"><?= e($hint) ?></div>
-  <?php endif; ?>
+  <div class="hint mt2" id="<?= e($id) ?>_hint"><?= $hint !== '' ? e($hint) . ' ' : '' ?>You can draw with a finger or mouse, or type your name instead.</div>
 </div>

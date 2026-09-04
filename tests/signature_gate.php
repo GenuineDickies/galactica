@@ -29,6 +29,7 @@ declare(strict_types=1);
 
 require dirname(__DIR__) . '/app/Core.php';     // App::config
 require dirname(__DIR__) . '/app/Domain.php';
+require dirname(__DIR__) . '/app/helpers.php';   // signature_is_image
 require dirname(__DIR__) . '/app/Controllers/WorkOrderController.php';  // FLOW
 
 $PASS = 0; $FAIL = 0;
@@ -170,6 +171,18 @@ check('lesser of $200 / 10% — small job', Rules::varianceThreshold(600.00), 60
 check('lesser of $200 / 10% — large job', Rules::varianceThreshold(5000.00), 200.00);
 check('within tolerance',  Rules::varianceNeedsAuth(600.00, 650.00), false);
 check('beyond tolerance',  Rules::varianceNeedsAuth(600.00, 700.00), true);
+
+section('what counts as a signature image');
+/* A real capture is 40–120k of base64; PCRE cannot express a {64,200000}
+   bound, so the length must be checked outside the pattern (2026-09-03). */
+$b64 = function (int $n): string { return 'data:image/png;base64,' . str_repeat('A', $n); };
+check('typical drawn capture (57k)',  signature_is_image($b64(57000)),  true);
+check('large capture (150k)',         signature_is_image($b64(150000)), true);
+check('too short',                    signature_is_image($b64(10)),     false);
+check('too long (250k)',              signature_is_image($b64(250000)), false);
+check('jpeg allowed',                 signature_is_image('data:image/jpeg;base64,' . str_repeat('B', 100)), true);
+check('not an image',                 signature_is_image('data:text/html;base64,' . str_repeat('A', 100)), false);
+check('stray characters',             signature_is_image($b64(100) . '<script>'), false);
 
 printf("\n\033[1m%d passed, %d failed\033[0m\n", $PASS, $FAIL);
 exit($FAIL === 0 ? 0 : 1);

@@ -56,7 +56,7 @@ $fallback = [App::config('company')['lat'] ?? 45.5152, App::config('company')['l
 
   <div class="pinmap__canvas" id="map_<?= e($uid) ?>" data-pinmap-canvas></div>
 
-  <div class="pinmap__status" data-pinmap-status>
+  <div class="pinmap__status" data-pinmap-status aria-live="polite">
     <?php if ($hasLL): ?>
       Pin set from the customer's phone. Drag it if the vehicle is elsewhere.
     <?php else: ?>
@@ -69,20 +69,20 @@ $fallback = [App::config('company')['lat'] ?? 45.5152, App::config('company')['l
 
   <div class="form-grid mt3">
     <div class="field col-span-2">
-      <label>Street address, or nearest address</label>
+      <label for="<?= e($n) ?>_line">Street address, or nearest address</label>
       <div class="row">
         <input class="input" name="<?= e($n) ?>_line" value="<?= e((string) $p['line']) ?>"
-               placeholder="842 SE Morrison St" data-pinmap-line autocomplete="off">
+               placeholder="842 SE Morrison St" data-pinmap-line autocomplete="off" id="<?= e($n) ?>_line">
         <button type="button" class="btn btn--ghost btn--sm" data-pinmap-find>Find on map</button>
       </div>
       <div class="hint">Optional. A street number, street, city and state — ZIP is not needed.
         Leave it blank if there is nothing addressable near the pin; a shoulder or a rural
         milepost often has none. The pin is what a truck drives to, and the pin is required.</div>
     </div>
-    <div class="field"><label>City</label>
-      <input class="input" name="<?= e($n) ?>_city" value="<?= e((string) $p['city']) ?>" data-pinmap-city></div>
-    <div class="field"><label>State</label>
-      <select class="select" name="<?= e($n) ?>_state" data-pinmap-state>
+    <div class="field"><label for="<?= e($n) ?>_city">City</label>
+      <input class="input" name="<?= e($n) ?>_city" value="<?= e((string) $p['city']) ?>" data-pinmap-city id="<?= e($n) ?>_city"></div>
+    <div class="field"><label for="<?= e($n) ?>_state">State</label>
+      <select class="select" name="<?= e($n) ?>_state" data-pinmap-state id="<?= e($n) ?>_state">
         <option value=""></option>
         <?php foreach (us_states() as $s): ?>
           <option value="<?= e($s) ?>" <?= $s === (string) $p['state'] ? 'selected' : '' ?>><?= e($s) ?></option>

@@ -402,10 +402,7 @@ final class WorkOrderController
      */
     public static function recategorise(array $a): void
     {
-        $wo = self::find((int) $a['id']);
-        if (Auth::is('TECHNICIAN') && (int) $wo['technician_id'] !== Auth::id()) {
-            Auth::requireRole('ADMIN', 'DISPATCH');
-        }
+        $wo = self::authorized((int) $a['id']);
         if (in_array($wo['status'], ['CANCELLED'], true)) {
             flash('A cancelled work order is not recategorised.', 'err');
             redirect('/work-orders/' . $wo['id']);
@@ -437,10 +434,7 @@ final class WorkOrderController
     /** The driver is responsible for capturing the VIN, not the customer. */
     public static function captureVin(array $a): void
     {
-        $wo = self::find((int) $a['id']);
-        if (Auth::is('TECHNICIAN') && (int) $wo['technician_id'] !== Auth::id()) {
-            Auth::requireRole('ADMIN', 'DISPATCH');
-        }
+        $wo = self::authorized((int) $a['id']);
         EstimateController::attachVehicle(['id' => (string) $wo['estimate_id']], '/work-orders/' . $wo['id']);
     }
 
@@ -461,6 +455,10 @@ final class WorkOrderController
 
         if ($sig === '') {
             flash('Nothing was signed. Have the customer sign before starting work.', 'err');
+            redirect('/work-orders/' . $wo['id']);
+        }
+        if (!signature_is_image($sig)) {
+            flash('That signature could not be read. Please have the customer sign again.', 'err');
             redirect('/work-orders/' . $wo['id']);
         }
         if ($name === '') {
@@ -551,6 +549,9 @@ final class WorkOrderController
     /** The technician who owns this job, or a dispatcher/admin. */
     private static function authorized(int $id): array
     {
+        // Login first, then the record: a guest must never reach the role
+        // test below, where a non-technician falls through as "office".
+        Auth::require();
         $wo = self::find($id);
         if (Auth::is('TECHNICIAN') && (int) $wo['technician_id'] !== Auth::id()) {
             Auth::requireRole('ADMIN', 'DISPATCH');
@@ -576,6 +577,10 @@ final class WorkOrderController
         // outcome rather than a silent gap.
         $sig    = (string) input('signature_data', '');
         $reason = trim((string) input('unsigned_reason', ''));
+        if ($sig !== '' && !signature_is_image($sig)) {
+            flash('That signature could not be read. Please have the customer sign again.', 'err');
+            redirect('/work-orders/' . $wo['id']);
+        }
         if ($sig === '' && $reason === '') {
             flash('Ask the customer to sign off on the completed work. If they will not or cannot, record why — it cannot simply be left blank.', 'err');
             redirect('/work-orders/' . $wo['id']);
@@ -619,12 +624,19 @@ final class WorkOrderController
             flash('Only JPG, PNG or WEBP images are accepted.', 'err');
             redirect('/work-orders/' . $wo['id']);
         }
+        /* The label becomes part of a filename and of an <img src>, so it is
+         * an allowlisted word, never free text: no separators, no traversal,
+         * no attribute breakout. Anything else is filed as SITE. */
         $label = strtoupper((string) input('label', 'SITE'));
+        if (!preg_match('/^[A-Z0-9_]{1,24}$/', $label)) { $label = 'SITE'; }
         $seq   = (int) Db::val("SELECT COUNT(*)+1 FROM attachments WHERE entity_type='work_order' AND entity_id=?", [(int) $wo['id']]);
         $name  = sprintf('%s-%s-%03d-%s.%s', $wo['doc_number'], date('Ymd'), $seq, $label, $ok[$mime]);
         $dir   = dirname(__DIR__, 2) . '/storage/uploads';
         if (!is_dir($dir)) { mkdir($dir, 0775, true); }
-        move_uploaded_file($f['tmp_name'], $dir . '/' . $name);
+        if (!move_uploaded_file($f['tmp_name'], $dir . '/' . basename($name))) {
+            flash('The photo could not be stored on the server. Nothing was recorded — try again.', 'err');
+            redirect('/work-orders/' . $wo['id']);
+        }
 
         Db::insert('attachments', [
             'entity_type' => 'work_order', 'entity_id' => (int) $wo['id'], 'kind' => 'PHOTO',
@@ -638,6 +650,7 @@ final class WorkOrderController
 
     public static function find(int $id): array
     {
+        Auth::require();   // before the lookup: a guest learns nothing from 404-vs-redirect
         $w = Db::one('SELECT * FROM work_orders WHERE id = ?', [$id]);
         if (!$w) { http_response_code(404); View::render('pages/404', ['title' => 'Not found']); exit; }
         return $w;

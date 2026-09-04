@@ -52,7 +52,7 @@ $cust = fn(array $r): string => customer_name($r, true) ?: 'Unnamed';
       <div class="panel__body panel__body--flush">
         <?php if (!$intake): ?>
           <div class="empty">
-            <div class="empty__icon">☎</div>
+            <div class="empty__icon" aria-hidden="true">☎</div>
             <div class="empty__title">Intake is clear</div>
             <div class="empty__body">Every request has been promoted or closed. When the next call comes in, start it here.</div>
             <button class="btn btn--primary" data-url="<?= url('service-requests/new') ?>">New Service Request</button>
@@ -60,13 +60,13 @@ $cust = fn(array $r): string => customer_name($r, true) ?: 'Unnamed';
         <?php else: ?>
         <div class="table-wrap"><table class="tbl">
           <thead><tr>
-            <th>Request</th><th>Reported by</th><th>Reported need</th><th>Priority</th><th class="right">Logged</th>
+            <th scope="col">Request</th><th scope="col">Reported by</th><th scope="col">Reported need</th><th scope="col">Priority</th><th class="right" scope="col">Logged</th>
           </tr></thead>
           <tbody>
           <?php foreach ($intake as $r): ?>
             <tr data-href="<?= url('service-requests/' . $r['id']) ?>">
-              <td class="docno nowrap"><?= e($r['doc_number']) ?>
-                <div class="text-sm faint"><?= e(status_label((string) $r['channel'])) ?></div></td>
+              <td class="docno nowrap"><a class="row-link" href="<?= url('service-requests/' . $r['id']) ?>"><?= e($r['doc_number']) ?>
+                <div class="text-sm faint"><?= e(status_label((string) $r['channel'])) ?></div></a></td>
               <td class="strong"><?= e($r['reported_name'] ?: '—') ?>
                 <div class="text-sm faint"><?= e(phone_display($r['reported_phone'])) ?></div></td>
               <td><?= e(service_type_label($r['reported_service'])) ?>
@@ -95,18 +95,18 @@ $cust = fn(array $r): string => customer_name($r, true) ?: 'Unnamed';
       <div class="panel__body panel__body--flush">
         <?php if (!$inField): ?>
           <div class="empty">
-            <div class="empty__icon">▲</div>
+            <div class="empty__icon" aria-hidden="true">▲</div>
             <div class="empty__title">Nobody is out on a job</div>
             <div class="empty__body">Authorized estimates dispatch to the field from the estimate screen.</div>
           </div>
         <?php else: ?>
         <div class="table-wrap"><table class="tbl">
-          <thead><tr><th>Status</th><th>Work order</th><th>Customer</th><th>Technician</th></tr></thead>
+          <thead><tr><th scope="col">Status</th><th scope="col">Work order</th><th scope="col">Customer</th><th scope="col">Technician</th></tr></thead>
           <tbody>
           <?php foreach ($inField as $w): ?>
             <tr data-href="<?= url('work-orders/' . $w['id']) ?>">
               <td><?= badge($w['status']) ?></td>
-              <td class="docno nowrap"><?= e($w['doc_number']) ?><div class="text-sm faint"><?= e($w['est_no']) ?></div></td>
+              <td class="docno nowrap"><a class="row-link" href="<?= url('work-orders/' . $w['id']) ?>"><?= e($w['doc_number']) ?><div class="text-sm faint"><?= e($w['est_no']) ?></div></a></td>
               <td class="strong"><?= e($cust($w)) ?></td>
               <td class="muted"><?= e(trim(($w['tech_first'] ?? '') . ' ' . ($w['tech_last'] ?? ''))) ?: '<span class="badge badge--warn"><i></i>Unassigned</span>' ?></td>
             </tr>

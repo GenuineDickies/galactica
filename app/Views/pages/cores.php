@@ -25,7 +25,7 @@ $tone = ['CHARGED' => 'warn', 'COLLECTED' => 'info', 'RETURNED' => 'info',
 ?>
 <?php if ($needs_schema): ?>
 <div class="panel"><div class="panel__body">
-  <div class="alert alert--warn mb0"><div>
+  <div class="alert alert--warn mb0" role="status"><div>
     <strong>The core deposits table has not been created yet.</strong>
     The code for this page is deployed but the database has not caught up —
     schema changes are applied by hand here, deliberately.
@@ -55,7 +55,7 @@ $tone = ['CHARGED' => 'warn', 'COLLECTED' => 'info', 'RETURNED' => 'info',
 
 <?php if ($overdue): ?>
 <div class="panel mb4"><div class="panel__body">
-  <div class="alert alert--warn mb0"><div>
+  <div class="alert alert--warn mb0" role="status"><div>
     <strong><?= count($overdue) ?> core<?= count($overdue) === 1 ? '' : 's' ?> past the <?= (int) $window ?>-day window.</strong>
     Forfeiting moves the deposit from money you owe into money you earned. It is the only
     point at which a core becomes revenue, so nothing does it automatically — you press the button.
@@ -79,7 +79,7 @@ $tone = ['CHARGED' => 'warn', 'COLLECTED' => 'info', 'RETURNED' => 'info',
   <div class="panel__body panel__body--flush">
     <?php if (!$rows): ?>
       <div class="empty">
-        <div class="empty__icon">○</div>
+        <div class="empty__icon" aria-hidden="true">○</div>
         <div class="empty__title">Nothing here</div>
         <div class="empty__body">A core record is created automatically when an invoice is issued
           carrying a part with a core charge. Set that on the item in Products &amp; Services.</div>
@@ -87,8 +87,8 @@ $tone = ['CHARGED' => 'warn', 'COLLECTED' => 'info', 'RETURNED' => 'info',
     <?php else: ?>
     <div class="table-wrap"><table class="tbl">
       <thead><tr>
-        <th>Part</th><th>Where it is</th><th class="right">Value</th>
-        <th>Charged</th><th>Due back</th><th>Supplier</th><th></th>
+        <th scope="col">Part</th><th scope="col">Where it is</th><th class="right" scope="col">Value</th>
+        <th scope="col">Charged</th><th scope="col">Due back</th><th scope="col">Supplier</th><th scope="col"></th>
       </tr></thead>
       <tbody>
       <?php foreach ($rows as $r):
@@ -130,8 +130,8 @@ $tone = ['CHARGED' => 'warn', 'COLLECTED' => 'info', 'RETURNED' => 'info',
          is a database value, and the person holding the part should not have to
          translate. */ ?>
 <?php foreach ($rows as $r): $st = (string) $r['status']; if (empty($next[$st])) continue; ?>
-<div class="modal-bg" id="core<?= (int) $r['id'] ?>"><div class="modal panel">
-  <div class="panel__head"><div class="panel__title"><?= e($r['part_name']) ?></div><div class="topbar__spacer"></div>
+<div class="modal-bg" id="core<?= (int) $r['id'] ?>"><div class="modal panel" role="dialog" aria-modal="true" aria-labelledby="core<?= (int) $r['id'] ?>_title">
+  <div class="panel__head"><div class="panel__title" id="core<?= (int) $r['id'] ?>_title"><?= e($r['part_name']) ?></div><div class="topbar__spacer"></div>
     <button class="btn btn--ghost btn--sm" data-modal-close type="button">Close</button></div>
   <div class="panel__body">
     <div class="text-sm muted mb4">
@@ -146,8 +146,8 @@ $tone = ['CHARGED' => 'warn', 'COLLECTED' => 'info', 'RETURNED' => 'info',
         <input type="hidden" name="to" value="<?= e($to) ?>">
 
         <?php if ($to === 'COLLECTED'): ?>
-          <div class="field"><label>Who has it</label>
-            <select class="select" name="collected_by_id">
+          <div class="field"><label for="collected_by_id_<?= (int) $r['id'] ?>_<?= e($to) ?>">Who has it</label>
+            <select class="select" name="collected_by_id" id="collected_by_id_<?= (int) $r['id'] ?>_<?= e($to) ?>">
               <option value="">— me —</option>
               <?php foreach ($techs as $t): ?>
                 <option value="<?= (int) $t['id'] ?>"><?= e($t['first_name'] . ' ' . $t['last_name']) ?></option>
@@ -155,14 +155,14 @@ $tone = ['CHARGED' => 'warn', 'COLLECTED' => 'info', 'RETURNED' => 'info',
             </select>
             <div class="hint">Who is carrying the old unit. This is the field that makes it findable later.</div></div>
         <?php elseif ($to === 'RETURNED'): ?>
-          <div class="field"><label>Supplier</label>
-            <input class="input" name="supplier_name" value="<?= e($r['supplier_name'] ?? '') ?>" placeholder="O'Reilly, NAPA…"></div>
+          <div class="field"><label for="supplier_name_<?= (int) $r['id'] ?>_<?= e($to) ?>">Supplier</label>
+            <input class="input" name="supplier_name" value="<?= e($r['supplier_name'] ?? '') ?>" placeholder="O'Reilly, NAPA…" id="supplier_name_<?= (int) $r['id'] ?>_<?= e($to) ?>"></div>
         <?php endif; ?>
 
         <?php if ($to === 'FORFEITED'): ?>
-          <div class="field"><label>Why</label><input class="input" name="notes" placeholder="Customer kept the old unit"></div>
+          <div class="field"><label for="notes_<?= (int) $r['id'] ?>_<?= e($to) ?>">Why</label><input class="input" name="notes" placeholder="Customer kept the old unit" id="notes_<?= (int) $r['id'] ?>_<?= e($to) ?>"></div>
         <?php else: ?>
-          <div class="field"><label>Note</label><input class="input" name="notes"></div>
+          <div class="field"><label for="notes_2_<?= (int) $r['id'] ?>_<?= e($to) ?>">Note</label><input class="input" name="notes" id="notes_2_<?= (int) $r['id'] ?>_<?= e($to) ?>"></div>
         <?php endif; ?>
 
         <button class="btn <?= $to === 'FORFEITED' ? 'btn--ghost' : 'btn--primary' ?> btn--block"

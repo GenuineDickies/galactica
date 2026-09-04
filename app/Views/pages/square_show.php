@@ -103,7 +103,7 @@ $field = static function (string $label, $value, string $hint = ''): void {
     <div class="panel mb4">
       <div class="panel__head"><div class="panel__title">Why it failed</div></div>
       <div class="panel__body">
-        <div class="alert alert--warn mb0"><div>
+        <div class="alert alert--warn mb0" role="status"><div>
           <strong><?= e($r['decline_code']) ?></strong> — <?= e($r['decline_detail']) ?>
         </div></div>
       </div>
@@ -174,7 +174,7 @@ $field = static function (string $label, $value, string $hint = ''): void {
         <div class="topbar__spacer"></div><span class="tag"><?= count($sameCard) ?></span></div>
       <div class="panel__body panel__body--flush">
         <div class="table-wrap"><table class="tbl">
-          <thead><tr><th>Date</th><th class="right">Amount</th><th>Who</th></tr></thead>
+          <thead><tr><th scope="col">Date</th><th class="right" scope="col">Amount</th><th scope="col">Who</th></tr></thead>
           <tbody>
           <?php foreach ($sameCard as $s): ?>
             <tr>

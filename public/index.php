@@ -65,7 +65,18 @@ header("Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-i
     . "frame-src https://www.openstreetmap.org; frame-ancestors 'none'; "
     . "base-uri 'self'; form-action 'self'");
 
-$secureCookie = str_starts_with(strtolower(Http::baseUrl()), 'https://');
+/* Whether the session cookie is HTTPS-only is decided from the request and
+ * config.php — never from a database row. The settings table is an admin
+ * text field (and a DB read before session_start(), which put the friendly
+ * 503 below out of reach during an outage); a blank scheme there must not
+ * silently strip Secure from every staff session. */
+$secureCookie = (!empty($_SERVER['HTTPS']) && strtolower((string) $_SERVER['HTTPS']) !== 'off')
+    || strtolower((string) ($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '')) === 'https'
+    || str_starts_with(strtolower((string) ($cfg['install']['base_url'] ?? '')), 'https://');
+if ($secureCookie) {
+    header('Strict-Transport-Security: max-age=31536000; includeSubDomains');
+}
+ini_set('session.use_strict_mode', '1');
 session_set_cookie_params([
     'httponly' => true,
     'samesite' => 'Lax',

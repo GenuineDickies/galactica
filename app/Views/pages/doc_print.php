@@ -46,7 +46,7 @@ $bal   = (float) ($doc['balance_due'] ?? 0);
         <div class="row" style="align-items:flex-start">
           <div class="brand__mark" style="width:46px;height:46px;border-radius:13px;font-size:15px">WK</div>
           <div>
-            <div style="font-size:17px;font-weight:730"><?= e($co['name']) ?></div>
+            <h1 style="font-size:17px;font-weight:730"><?= e($co['name']) ?></h1>
             <div class="muted text-sm"><?= e($co['addr']) ?><br><?= e($co['phone']) ?> · <?= e($co['email']) ?></div>
           </div>
         </div>
@@ -113,7 +113,7 @@ $bal   = (float) ($doc['balance_due'] ?? 0);
   <div class="panel">
     <div class="panel__body panel__body--flush">
       <table class="tbl">
-        <thead><tr><th>Description</th><th>SKU</th><th class="right">Qty</th><th class="right">Unit</th><th class="right">Amount</th></tr></thead>
+        <thead><tr><th scope="col">Description</th><th scope="col">SKU</th><th class="right" scope="col">Qty</th><th class="right" scope="col">Unit</th><th class="right" scope="col">Amount</th></tr></thead>
         <tbody>
         <?php foreach ($lines as $l): ?>
           <tr>
@@ -147,7 +147,7 @@ $bal   = (float) ($doc['balance_due'] ?? 0);
   <?php if ($docKind !== 'ESTIMATE' && !empty($payments)): ?>
   <div class="panel"><div class="panel__body panel__body--flush">
     <table class="tbl">
-      <thead><tr><th>Payment</th><th>Method</th><th>Reference</th><th class="right">Amount</th></tr></thead>
+      <thead><tr><th scope="col">Payment</th><th scope="col">Method</th><th scope="col">Reference</th><th class="right" scope="col">Amount</th></tr></thead>
       <tbody>
       <?php foreach ($payments as $p): ?>
         <tr><td class="docno"><?= e($p['doc_number']) ?> <span class="muted text-sm"><?= e(fdate($p['paid_at'])) ?></span></td>
@@ -171,7 +171,7 @@ $bal   = (float) ($doc['balance_due'] ?? 0);
         <?php endif; ?>
       </div>
       <?php if (!empty($doc['signature_data'])): ?>
-        <img src="<?= e($doc['signature_data']) ?>" alt="signature" style="height:80px;margin-top:10px">
+        <img src="<?= e($doc['signature_data']) ?>" alt="Signature of <?= e($doc['authorized_by'] ?: 'the customer') ?>" style="height:80px;margin-top:10px">
       <?php endif; ?>
     <?php else: ?>
       <div class="text-sm muted"><?= e(App::setting('invoice_terms', '')) ?></div>

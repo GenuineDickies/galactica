@@ -423,6 +423,26 @@ Amber is a *status*. Using it as chrome means the interface cannot signal
 amber, red and green are reserved for state, and there is exactly one glowing
 primary action per screen so the next step is never ambiguous.
 
+## Accessibility is a hard rule, and the lint enforces the mechanical part
+
+**Decided 2026-09-03.** Accessibility: WCAG 2.1 AA is a hard rule for every
+view; `tests/a11y_lint.php` enforces the mechanical part.
+
+The two users who matter most cannot ask anyone for help: the stranded caller
+on `/locate`, `/sign` and `/pay`, and the technician on a phone at the
+roadside. A control with no name, a row that only a mouse can open, or a
+status message that a screen reader never hears is a failure for exactly
+those people. The six standing rules live in `AGENTS.md` → Writing views;
+the lint (labels, `scope`, real links in clickable rows, dialog semantics,
+live regions, glyphs, `disabled` reasons, headings, focus outlines, and the
+contrast of every text/background token pair actually used) runs as part of
+Definition of Done and must be at 0 failed. Two token changes came out of the
+contrast check: `--text-faint` and `--slate` were lifted and `--danger` was
+brightened slightly so each passes 4.5:1 on the panel surfaces they sit on.
+A signature can be given by typing a name (rendered to the same PNG the
+drawn path produces), so the authorization flow no longer depends on a
+pointer.
+
 ## Deferred
 
 Recorded here so they aren't mistaken for oversights.

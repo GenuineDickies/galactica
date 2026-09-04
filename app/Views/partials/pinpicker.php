@@ -78,10 +78,10 @@ $fb = [App::config('company')['lat'] ?? 45.5152, App::config('company')['lng'] ?
 </div>
 
 <div class="modal-bg" id="<?= e($id) ?>" data-pinpick-modal="<?= e($id) ?>">
-  <div class="modal panel modal--wide">
+  <div class="modal panel modal--wide" role="dialog" aria-modal="true" aria-labelledby="<?= e($id) ?>_title">
     <div class="panel__head">
       <div>
-        <div class="panel__title">Where is the vehicle?</div>
+        <div class="panel__title" id="<?= e($id) ?>_title">Where is the vehicle?</div>
         <div class="panel__sub">Drag and zoom the map, then click the spot. The pin is where the truck drives.</div>
       </div>
       <div class="topbar__spacer"></div>
@@ -89,7 +89,7 @@ $fb = [App::config('company')['lat'] ?? 45.5152, App::config('company')['lng'] ?
     </div>
     <div class="panel__body">
       <div class="pinpick__canvas" data-pinpick-canvas></div>
-      <div class="pinpick__status" data-pinpick-status>Click the map to place the pin.</div>
+      <div class="pinpick__status" data-pinpick-status aria-live="polite">Click the map to place the pin.</div>
       <div class="btn-row mt3">
         <button class="btn btn--primary" type="button" data-pinpick-confirm disabled>Confirm this position</button>
         <button class="btn btn--ghost" type="button" data-pinpick-cancel>Cancel</button>

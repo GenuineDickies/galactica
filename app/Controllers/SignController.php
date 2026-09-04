@@ -69,6 +69,11 @@ final class SignController
             flash('Please enter your name and sign before submitting.', 'err');
             redirect('/sign/' . $a['token']);
         }
+        if (!signature_is_image($sig)) {
+            flash('Your signature could not be read. Please sign again.', 'err');
+            redirect('/sign/' . $a['token']);
+        }
+        $name = mb_substr($name, 0, 120);
 
         $claimed = Db::tx(function () use ($req, $wo, $sig, $name): bool {
             if (!SignatureRequest::markSigned($req, $name)) {
@@ -111,6 +116,8 @@ final class SignController
     {
         $req = SignatureRequest::byToken($token);
         if (!$req || $req['doc_type'] !== 'WO') { self::gone(); }
+        // A superseded link stops showing the document, not just stops signing it.
+        if ($req['status'] === 'VOID') { self::gone(); }
 
         $wo = Db::one('SELECT * FROM work_orders WHERE id = ?', [(int) $req['doc_id']]);
         if (!$wo) { self::gone(); }

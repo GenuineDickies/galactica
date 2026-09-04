@@ -1,7 +1,7 @@
 <?php /* Copyright (c) 2026 White Knight Roadside, LLC. All Rights Reserved. Proprietary; licensed, not sold. See LICENSE.txt */ ?>
 <div class="panel mb4"><div class="panel__body">
   <form method="get" class="row wrap">
-    <input class="input" name="q" value="<?= e($q) ?>" placeholder="VIN, plate, make or model…" style="max-width:340px">
+    <input class="input" name="q" aria-label="Search vehicles" value="<?= e($q) ?>" placeholder="VIN, plate, make or model…" style="max-width:340px">
     <button class="btn">Search</button>
     <?php if ($q !== ''): ?><a class="btn btn--ghost" href="<?= url('vehicles') ?>">Clear</a><?php endif; ?>
     <div class="topbar__spacer"></div>
@@ -13,15 +13,15 @@
   <div class="panel__head"><div class="panel__title">Vehicles</div><div class="topbar__spacer"></div><span class="tag"><?= count($rows) ?></span></div>
   <div class="panel__body panel__body--flush">
 <?php if (!$rows): ?>
-  <div class="empty"><div class="empty__icon">⛟</div><div class="empty__title">No vehicles on file</div>
+  <div class="empty"><div class="empty__icon" aria-hidden="true">⛟</div><div class="empty__title">No vehicles on file</div>
     <div class="empty__body">Vehicles appear here once a driver captures a VIN in the field.</div></div>
 <?php else: ?>
   <div class="table-wrap"><table class="tbl">
-    <thead><tr><th>Vehicle</th><th>VIN</th><th>Plate</th><th>Associated account</th><th class="right">Added</th></tr></thead><tbody>
+    <thead><tr><th scope="col">Vehicle</th><th scope="col">VIN</th><th scope="col">Plate</th><th scope="col">Associated account</th><th class="right" scope="col">Added</th></tr></thead><tbody>
     <?php foreach ($rows as $r): ?>
       <tr data-href="<?= url('vehicles/' . $r['id']) ?>">
-        <td class="strong"><?= e(trim(($r['year'] ?: '') . ' ' . $r['make'] . ' ' . $r['model'])) ?: 'Unidentified' ?>
-          <?php if ($r['color']): ?><div class="text-sm faint"><?= e($r['color']) ?></div><?php endif; ?></td>
+        <td class="strong"><a class="row-link" href="<?= url('vehicles/' . $r['id']) ?>"><?= e(trim(($r['year'] ?: '') . ' ' . $r['make'] . ' ' . $r['model'])) ?: 'Unidentified' ?>
+          <?php if ($r['color']): ?><div class="text-sm faint"><?= e($r['color']) ?></div><?php endif; ?></a></td>
         <td class="docno"><?= e($r['vin']) ?></td>
         <td><?= (int) $r['no_plate'] === 1 ? '<span class="badge badge--slate"><i></i>No plate</span>' : e(trim($r['plate'] . ' ' . $r['plate_state'])) ?></td>
         <td class="muted"><?= e(trim(($r['company'] ?? '') ?: (($r['first_name'] ?? '') . ' ' . ($r['last_name'] ?? '')))) ?: '—' ?></td>

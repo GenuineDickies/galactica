@@ -106,6 +106,7 @@ $groups['Help'] = [
 $co = App::config('company');
 ?>
 <aside class="sidebar">
+<nav aria-label="Primary">
   <div class="brand">
     <div class="brand__mark">WK</div>
     <div>
@@ -132,6 +133,7 @@ $co = App::config('company');
     </div>
   <?php endforeach; ?>
 
+</nav>
   <div class="navgroup" style="margin-top:auto">
     <div class="text-xs faint" style="padding:12px 10px 0;line-height:1.6">
       <?= e($co['tagline']) ?><br>

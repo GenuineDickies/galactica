@@ -1296,7 +1296,8 @@ final class PartNumbers
         $sku = preg_replace('/[^A-Z0-9\- ]/', '', $sku) ?? '';
         $sku = preg_replace('/\s+/', '-', trim($sku)) ?? '';
         $sku = preg_replace('/-+/', '-', $sku) ?? '';
-        return trim($sku, '-');
+        // catalog_items.sku is VARCHAR(48); a runaway suggestion must not 500 the insert.
+        return substr(trim($sku, '-'), 0, 40);
     }
 
     /** Guarantee uniqueness, whatever the source proposed. */

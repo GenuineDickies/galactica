@@ -20,16 +20,23 @@ final class AuthController
 
     public static function submit(): void
     {
-        if (Auth::attempt((string) input('email', ''), (string) input('password', ''))) {
+        $email = strtolower(trim((string) input('email', '')));
+        $ip    = (string) ($_SERVER['REMOTE_ADDR'] ?? '?');
+        if (Auth::attempt($email, (string) input('password', ''))) {
+            Audit::log('user', (int) Auth::id(), 'login', 'from ' . $ip);
             flash('Signed in. Welcome back.', 'ok');
             redirect('/dashboard');
         }
+        // The attempt is recorded — the address tried and where from, never
+        // the password — so a run of failures is visible after the fact.
+        Audit::log('user', 0, 'login:failed', mb_substr($email, 0, 190) . ' from ' . $ip);
         flash('Those credentials did not match an active account.', 'err');
         redirect('/login');
     }
 
     public static function logout(): void
     {
+        if (Auth::id()) { Audit::log('user', (int) Auth::id(), 'logout', ''); }
         Auth::logout();
         redirect('/login');
     }

@@ -2,8 +2,8 @@
 <?php $profit = $revenue - $expense; ?>
 <div class="panel mb4"><div class="panel__body">
   <form method="get" class="row wrap">
-    <div class="field mb0"><label>From</label><input class="input" type="date" name="from" value="<?= e($from) ?>"></div>
-    <div class="field mb0"><label>To</label><input class="input" type="date" name="to" value="<?= e($to) ?>"></div>
+    <div class="field mb0"><label for="from">From</label><input class="input" type="date" name="from" value="<?= e($from) ?>" id="from"></div>
+    <div class="field mb0"><label for="to">To</label><input class="input" type="date" name="to" value="<?= e($to) ?>" id="to"></div>
     <button class="btn" style="margin-top:18px">Run</button>
   </form>
 </div></div>
@@ -26,7 +26,7 @@
       <div class="panel__body panel__body--flush">
       <?php if (!$byService): ?><div class="panel__body muted text-sm">Nothing invoiced in this range.</div>
       <?php else: ?>
-        <table class="tbl"><thead><tr><th>Item</th><th>Type</th><th class="right">Count</th><th class="right">Revenue</th><th class="right">Cost</th><th class="right">Margin</th></tr></thead><tbody>
+        <table class="tbl"><thead><tr><th scope="col">Item</th><th scope="col">Type</th><th class="right" scope="col">Count</th><th class="right" scope="col">Revenue</th><th class="right" scope="col">Cost</th><th class="right" scope="col">Margin</th></tr></thead><tbody>
         <?php foreach ($byService as $r):
           $m = (float) $r['revenue'] > 0 ? ((float) $r['revenue'] - (float) $r['cost']) / (float) $r['revenue'] * 100 : 0; ?>
           <tr><td class="strong"><?= e($r['name']) ?></td>
@@ -45,10 +45,10 @@
       <div class="panel__body panel__body--flush">
       <?php if (!$unpaid): ?><div class="panel__body muted text-sm">Everything issued has been paid.</div>
       <?php else: ?>
-        <table class="tbl"><thead><tr><th>Invoice</th><th>Customer</th><th>Due</th><th class="right">Balance</th></tr></thead><tbody>
+        <table class="tbl"><thead><tr><th scope="col">Invoice</th><th scope="col">Customer</th><th scope="col">Due</th><th class="right" scope="col">Balance</th></tr></thead><tbody>
         <?php foreach ($unpaid as $r): $late = $r['due_at'] && strtotime($r['due_at']) < time(); ?>
           <tr data-href="<?= url('invoices/' . $r['id']) ?>">
-            <td class="docno"><?= e($r['doc_number']) ?></td>
+            <td class="docno"><a class="row-link" href="<?= url('invoices/' . $r['id']) ?>"><?= e($r['doc_number']) ?></a></td>
             <td class="strong"><?= e(customer_name($r, true)) ?></td>
             <td class="<?= $late ? '' : 'muted' ?>"><?= e(fdate($r['due_at'])) ?> <?= $late ? '<span class="badge badge--danger"><i></i>Overdue</span>' : '' ?></td>
             <td class="right num strong"><?= money($r['balance_due']) ?></td></tr>

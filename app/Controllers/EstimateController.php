@@ -191,7 +191,11 @@ final class EstimateController
      */
     public static function attachVehicle(array $a, ?string $back = null): void
     {
-        Auth::require();
+        /* Direct hits on /estimates/{id}/vehicle are office-only, like every
+         * other estimate write. A technician reaches this code only through
+         * WorkOrderController::captureVin, which has already checked that the
+         * work order is theirs and passes $back. */
+        if ($back === null) { Auth::requireRole('ADMIN', 'DISPATCH'); } else { Auth::require(); }
         $est  = self::find((int) $a['id']);
         $back = $back ?: '/estimates/' . $est['id'];
         $sr  = ServiceRequestController::find((int) $est['service_request_id']);

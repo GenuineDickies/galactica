@@ -44,19 +44,19 @@ $f = $f ?? ['service' => '', 'outcome' => '', 'q' => ''];
 <div class="panel mb4">
   <div class="panel__body">
     <?php if ($total === 0): ?>
-      <div class="alert alert--warn mb0"><div>
+      <div class="alert alert--warn mb0" role="status"><div>
         <strong>Nothing has been logged yet.</strong>
         Every call to an outside service, and every callback received from one, is written here —
         whether it succeeded, failed, or was only held because no provider is connected. An empty
         log means nothing has been attempted, not that something is broken.
       </div></div>
     <?php elseif ($failures === 0): ?>
-      <div class="alert alert--ok mb0"><div>
+      <div class="alert alert--ok mb0" role="status"><div>
         <strong>No failures on record.</strong>
         <?= number_format($total) ?> call<?= $total === 1 ? '' : 's' ?> logged, every one of them fine.
       </div></div>
     <?php else: ?>
-      <div class="alert alert--warn mb0"><div>
+      <div class="alert alert--warn mb0" role="status"><div>
         <strong><?= number_format($failures) ?> failure<?= $failures === 1 ? '' : 's' ?></strong>
         out of <?= number_format($total) ?> logged call<?= $total === 1 ? '' : 's' ?>.
         A failure here is not always a problem — a rejected callback from another business's
@@ -78,7 +78,7 @@ $f = $f ?? ['service' => '', 'outcome' => '', 'q' => ''];
 
   <div class="panel__body">
     <form method="get" action="<?= url('api-log') ?>" class="row wrap">
-      <select class="select" name="service" style="max-width:170px">
+      <select class="select" name="service" aria-label="Service" style="max-width:170px">
         <option value="">All services</option>
         <?php foreach ($services as $s): ?>
           <option value="<?= e($s['service']) ?>" <?= $f['service'] === $s['service'] ? 'selected' : '' ?>>
@@ -86,12 +86,12 @@ $f = $f ?? ['service' => '', 'outcome' => '', 'q' => ''];
           </option>
         <?php endforeach; ?>
       </select>
-      <select class="select" name="outcome" style="max-width:150px">
+      <select class="select" name="outcome" aria-label="Outcome" style="max-width:150px">
         <option value="">Any outcome</option>
         <option value="fail" <?= $f['outcome'] === 'fail' ? 'selected' : '' ?>>Failures only</option>
         <option value="ok"   <?= $f['outcome'] === 'ok'   ? 'selected' : '' ?>>Successes only</option>
       </select>
-      <input class="input" name="q" value="<?= e($f['q']) ?>" placeholder="Reference, operation or reason" style="min-width:240px;flex:1">
+      <input class="input" name="q" aria-label="Search the log" value="<?= e($f['q']) ?>" placeholder="Reference, operation or reason" style="min-width:240px;flex:1">
       <button class="btn btn--sm">Filter</button>
       <?php if ($f['service'] !== '' || $f['outcome'] !== '' || $f['q'] !== ''): ?>
         <a class="btn btn--sm btn--ghost" href="<?= url('api-log') ?>">Clear</a>
@@ -105,13 +105,13 @@ $f = $f ?? ['service' => '', 'outcome' => '', 'q' => ''];
 
   <div class="panel__body panel__body--flush">
 <?php if (!$rows): ?>
-  <div class="empty"><div class="empty__icon">◎</div><div class="empty__title">Nothing matches</div>
+  <div class="empty"><div class="empty__icon" aria-hidden="true">◎</div><div class="empty__title">Nothing matches</div>
     <div class="empty__body">No logged call fits those filters. Clear them to see everything.</div></div>
 <?php else: ?>
   <div class="table-wrap"><table class="tbl">
     <thead><tr>
-      <th>Outcome</th><th>Service</th><th>Driver</th><th>Operation</th>
-      <th>Reference</th><th>What happened</th><th class="right">When</th>
+      <th scope="col">Outcome</th><th scope="col">Service</th><th scope="col">Driver</th><th scope="col">Operation</th>
+      <th scope="col">Reference</th><th scope="col">What happened</th><th class="right" scope="col">When</th>
     </tr></thead><tbody>
     <?php foreach ($rows as $r): ?>
       <?php

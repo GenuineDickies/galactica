@@ -36,8 +36,8 @@ $cols = $report['columns'] ?? [];
   <form method="get" action="<?= url('books') ?>" class="row wrap" style="gap:12px;align-items:flex-end">
     <input type="hidden" name="r" value="<?= e($key) ?>">
     <?php if ($key === 'account'): ?>
-      <div class="field" style="margin:0"><label>Account</label>
-        <select class="select" name="account" style="min-width:280px">
+      <div class="field" style="margin:0"><label for="account">Account</label>
+        <select class="select" name="account" style="min-width:280px" id="account">
           <option value="">— pick one —</option>
           <?php foreach ($accounts as $a): ?>
             <option value="<?= e($a['account_number']) ?>" <?= $account === $a['account_number'] ? 'selected' : '' ?>>
@@ -45,13 +45,13 @@ $cols = $report['columns'] ?? [];
           <?php endforeach; ?>
         </select></div>
     <?php elseif ($key === 'cash-basis'): ?>
-      <div class="field" style="margin:0"><label>From</label>
-        <input class="input" type="date" name="from" value="<?= e($from) ?>"></div>
-      <div class="field" style="margin:0"><label>To</label>
-        <input class="input" type="date" name="to" value="<?= e($to ?: date('Y-m-d')) ?>"></div>
+      <div class="field" style="margin:0"><label for="from">From</label>
+        <input class="input" type="date" name="from" value="<?= e($from) ?>" id="from"></div>
+      <div class="field" style="margin:0"><label for="to">To</label>
+        <input class="input" type="date" name="to" value="<?= e($to ?: date('Y-m-d')) ?>" id="to"></div>
     <?php elseif ($key === 'trial-balance'): ?>
-      <div class="field" style="margin:0"><label>As at</label>
-        <input class="input" type="date" name="to" value="<?= e($to) ?>">
+      <div class="field" style="margin:0"><label for="to_2">As at</label>
+        <input class="input" type="date" name="to" value="<?= e($to) ?>" id="to_2">
         <div class="hint">Leave blank for everything posted to date.</div></div>
     <?php else: ?>
       <div class="muted text-sm">This report shows the position right now.</div>
@@ -77,7 +77,7 @@ $cols = $report['columns'] ?? [];
   <div class="panel__body<?= $report['rows'] ? ' panel__body--flush' : '' ?>">
     <?php if (!$report['rows']): ?>
       <div class="empty">
-        <div class="empty__icon">○</div>
+        <div class="empty__icon" aria-hidden="true">○</div>
         <div class="empty__title">Nothing to show</div>
         <div class="empty__body"><?= e($report['note'] ?: 'No entries match.') ?></div>
       </div>
@@ -85,7 +85,7 @@ $cols = $report['columns'] ?? [];
       <div class="table-wrap"><table class="tbl">
         <thead><tr>
           <?php foreach ($cols as $c): ?>
-            <th class="<?= ($c['align'] ?? 'left') === 'right' ? 'right' : '' ?>"><?= e($c['label']) ?></th>
+            <th class="<?= ($c['align'] ?? 'left') === 'right' ? 'right' : '' ?>" scope="col"><?= e($c['label']) ?></th>
           <?php endforeach; ?>
         </tr></thead>
         <tbody>
@@ -113,7 +113,7 @@ $cols = $report['columns'] ?? [];
   <?php if (($report['note'] ?? '') !== '' && $report['rows']): ?>
     <div class="panel__foot" style="display:block">
       <?php /* An out-of-balance ledger is not a footnote. */ ?>
-      <div class="alert <?= empty($report['ok']) ? 'alert--danger' : 'alert--info' ?> mb0">
+      <div class="alert <?= empty($report['ok']) ? 'alert--danger' : 'alert--info' ?> mb0" role="status">
         <div><?= e($report['note']) ?></div>
       </div>
     </div>

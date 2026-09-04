@@ -35,8 +35,10 @@ $canIssue = $inv['status'] === 'DRAFT' && $vehGate['ok'] && !$needsAuth && $line
         <?php if ($inv['status'] === 'DRAFT'): ?>
           <form method="post" action="<?= url('invoices/' . $inv['id'] . '/issue') ?>">
             <?= csrf_field() ?>
-            <button class="btn btn--primary <?= $canIssue ? '' : 'is-disabled' ?>" <?= $canIssue ? '' : 'disabled' ?>
-                    title="<?= $canIssue ? '' : e($vehGate['reason'] ?: 'Re-authorization required first') ?>">Issue invoice</button>
+            <button class="btn btn--primary <?= $canIssue ? '' : 'is-disabled' ?>" <?= $canIssue ? '' : 'disabled aria-describedby="why-issue"' ?>>Issue invoice</button>
+            <?php if (!$canIssue): ?>
+              <div class="why" id="why-issue"><?= e($vehGate['reason'] ?: 'Re-authorization required first') ?></div>
+            <?php endif; ?>
           </form>
         <?php elseif (in_array($inv['status'], ['ISSUED','PARTIAL'], true)): ?>
           <form method="post" action="<?= url('payments/link/' . $inv['id']) ?>">
@@ -53,7 +55,7 @@ $canIssue = $inv['status'] === 'DRAFT' && $vehGate['ok'] && !$needsAuth && $line
 </div>
 
 <?php if (!$vehGate['ok'] && $inv['status'] === 'DRAFT'): ?>
-  <div class="alert alert--danger gate">
+  <div class="alert alert--danger gate" role="status">
     <div>
       <strong>Blocked: <?= e($vehGate['reason']) ?></strong>
       A VIN must be on file before money changes hands. If nothing was actually serviced on a vehicle — a loose wheel mount and balance, for instance —
@@ -71,7 +73,7 @@ $canIssue = $inv['status'] === 'DRAFT' && $vehGate['ok'] && !$needsAuth && $line
 <?php endif; ?>
 
 <?php if ($needsAuth): ?>
-  <div class="alert alert--warn gate">
+  <div class="alert alert--warn gate" role="status">
     <div>
       <strong>Re-authorization required.</strong>
       The approved estimate was <?= money($estTotal) ?>; this invoice is <?= money($totals['total']) ?> —
@@ -81,7 +83,7 @@ $canIssue = $inv['status'] === 'DRAFT' && $vehGate['ok'] && !$needsAuth && $line
     </div>
   </div>
 <?php elseif ((int) $inv['variance_authorized'] === 1): ?>
-  <div class="alert alert--ok">
+  <div class="alert alert--ok" role="status">
     <div><strong>Change in scope authorized</strong> by <?= e($inv['variance_auth_name']) ?> on <?= e(fdatetime($inv['variance_auth_at'])) ?>.</div>
   </div>
 <?php endif; ?>
@@ -99,7 +101,7 @@ $canIssue = $inv['status'] === 'DRAFT' && $vehGate['ok'] && !$needsAuth && $line
       <div class="panel__head"><div class="panel__title">Payments</div></div>
       <div class="panel__body panel__body--flush">
         <table class="tbl">
-          <thead><tr><th>Payment</th><th>Method</th><th>Reference</th><th class="right">Tip</th><th class="right">Amount</th><th class="right">Receipt</th></tr></thead>
+          <thead><tr><th scope="col">Payment</th><th scope="col">Method</th><th scope="col">Reference</th><th class="right" scope="col">Tip</th><th class="right" scope="col">Amount</th><th class="right" scope="col">Receipt</th></tr></thead>
           <tbody>
           <?php foreach ($payments as $p): $rc = Db::one('SELECT * FROM receipts WHERE payment_id = ?', [(int) $p['id']]); ?>
             <tr>
@@ -205,7 +207,7 @@ $canIssue = $inv['status'] === 'DRAFT' && $vehGate['ok'] && !$needsAuth && $line
         <?php if ($inv['status'] === 'DRAFT' && $office): ?>
           <form method="post" action="<?= url('invoices/' . $inv['id'] . '/po') ?>" class="row mt4">
             <?= csrf_field() ?>
-            <input class="input" name="po_number" value="<?= e($inv['po_number']) ?>" placeholder="PO number" maxlength="64">
+            <input class="input" name="po_number" aria-label="PO number" value="<?= e($inv['po_number']) ?>" placeholder="PO number" maxlength="64">
             <button class="btn btn--sm">Save</button>
           </form>
         <?php elseif ($inv['po_number']): ?>
@@ -220,7 +222,7 @@ $canIssue = $inv['status'] === 'DRAFT' && $vehGate['ok'] && !$needsAuth && $line
       <div class="panel__body">
         <form method="post" action="<?= url('invoices/' . $inv['id'] . '/void') ?>">
           <?= csrf_field() ?>
-          <div class="field"><label class="req">Reason</label><input class="input" name="void_reason" required></div>
+          <div class="field"><label class="req" for="void_reason">Reason</label><input class="input" name="void_reason" required id="void_reason"></div>
           <button class="btn btn--danger btn--sm btn--block" data-confirm="Void this invoice? The record is kept, never deleted.">Void invoice</button>
         </form>
         <div class="hint">Records are never deleted. Voiding leaves the document and its history intact.</div>
@@ -231,9 +233,9 @@ $canIssue = $inv['status'] === 'DRAFT' && $vehGate['ok'] && !$needsAuth && $line
 </div>
 
 <div class="modal-bg" id="payModal">
-  <div class="modal panel">
+  <div class="modal panel" role="dialog" aria-modal="true" aria-labelledby="payModal_title">
     <div class="panel__head">
-      <div><div class="panel__title">Take payment</div>
+      <div><div class="panel__title" id="payModal_title">Take payment</div>
       <div class="panel__sub">Balance due: <strong><?= money($inv['balance_due']) ?></strong></div></div>
       <div class="topbar__spacer"></div>
       <button class="btn btn--ghost btn--sm" data-modal-close type="button">Close</button>
@@ -245,21 +247,21 @@ $canIssue = $inv['status'] === 'DRAFT' && $vehGate['ok'] && !$needsAuth && $line
                  carries the same key and records exactly once. */ ?>
         <input type="hidden" name="idempotency_key" value="till-<?= (int) $inv['id'] ?>-<?= bin2hex(random_bytes(8)) ?>">
         <div class="form-grid">
-          <div class="field"><label class="req">Amount</label>
-            <input class="input" name="amount" type="number" step="0.01" min="0.01" value="<?= e(number_format((float) $inv['balance_due'], 2, '.', '')) ?>" required>
+          <div class="field"><label class="req" for="amount">Amount</label>
+            <input class="input" name="amount" type="number" step="0.01" min="0.01" value="<?= e(number_format((float) $inv['balance_due'], 2, '.', '')) ?>" required id="amount">
           </div>
-          <div class="field"><label>Tip</label><input class="input" name="tip_amount" type="number" step="0.01" min="0" value="0"></div>
+          <div class="field"><label for="tip_amount">Tip</label><input class="input" name="tip_amount" type="number" step="0.01" min="0" value="0" id="tip_amount"></div>
         </div>
         <div class="field">
-          <label>Method</label>
+          <fieldset class="radio-group"><legend>Method</legend>
           <div class="radio-row">
             <?php foreach (['CARD' => 'Card (Square)', 'CASH' => 'Cash', 'CHECK' => 'Check', 'ACH' => 'ACH', 'PROVIDER' => 'Provider remit'] as $k => $v): ?>
               <label class="radio-card"><input type="radio" name="method" value="<?= e($k) ?>" <?= $k === 'CARD' ? 'checked' : '' ?>><span><?= e($v) ?></span></label>
             <?php endforeach; ?>
-          </div>
+          </div></fieldset>
         </div>
-        <div class="field"><label>Reference</label><input class="input" name="reference" placeholder="Square payment id, check number, remittance ref"></div>
-        <div class="alert alert--info"><div>The idempotency key is generated on the server before any processor call, so a double-click can never double-charge. Pay the invoice balance first; any amount above it is recorded as a tip for the assigned driver. Tips are tracked separately and are not taxable.</div></div>
+        <div class="field"><label for="reference">Reference</label><input class="input" name="reference" placeholder="Square payment id, check number, remittance ref" id="reference"></div>
+        <div class="alert alert--info" role="status"><div>The idempotency key is generated on the server before any processor call, so a double-click can never double-charge. Pay the invoice balance first; any amount above it is recorded as a tip for the assigned driver. Tips are tracked separately and are not taxable.</div></div>
         <button class="btn btn--primary btn--block">Record payment and issue receipt</button>
       </form>
     </div>
@@ -267,16 +269,16 @@ $canIssue = $inv['status'] === 'DRAFT' && $vehGate['ok'] && !$needsAuth && $line
 </div>
 
 <div class="modal-bg" id="authModal" data-customer-facing>
-  <div class="modal panel">
-    <div class="panel__head"><div class="panel__title">Capture re-authorization</div>
+  <div class="modal panel" role="dialog" aria-modal="true" aria-labelledby="authModal_title">
+    <div class="panel__head"><div class="panel__title" id="authModal_title">Capture re-authorization</div>
       <div class="topbar__spacer"></div><button class="btn btn--ghost btn--sm" data-modal-close type="button">Close</button></div>
     <div class="panel__body">
-      <div class="alert alert--warn">
+      <div class="alert alert--warn" role="status">
         <div>Estimate <?= money($estTotal) ?> → invoice <?= money($totals['total']) ?>. The customer is agreeing to the new amount.</div>
       </div>
       <form method="post" action="<?= url('invoices/' . $inv['id'] . '/authorize') ?>" data-sig-required>
         <?= csrf_field() ?>
-        <div class="field"><label class="req">Authorizing name</label><input class="input" name="variance_auth_name" required placeholder="<?= e($custName) ?>"></div>
+        <div class="field"><label class="req" for="variance_auth_name">Authorizing name</label><input class="input" name="variance_auth_name" required placeholder="<?= e($custName) ?>" id="variance_auth_name"></div>
         <?php View::partial('partials/signature_field', [
           'id'       => 'varSig',
           'label'    => 'Signature',
@@ -292,14 +294,14 @@ $canIssue = $inv['status'] === 'DRAFT' && $vehGate['ok'] && !$needsAuth && $line
 </div>
 
 <div class="modal-bg" id="noVehModal">
-  <div class="modal panel">
-    <div class="panel__head"><div class="panel__title">No vehicle was serviced</div>
+  <div class="modal panel" role="dialog" aria-modal="true" aria-labelledby="noVehModal_title">
+    <div class="panel__head"><div class="panel__title" id="noVehModal_title">No vehicle was serviced</div>
       <div class="topbar__spacer"></div><button class="btn btn--ghost btn--sm" data-modal-close type="button">Close</button></div>
     <div class="panel__body">
       <form method="post" action="<?= url('invoices/' . $inv['id'] . '/no-vehicle') ?>">
         <?= csrf_field() ?>
-        <div class="field"><label class="req">Reason</label>
-          <input class="input" name="no_vehicle_reason" required placeholder="Loose wheel mount and balance — customer brought the wheel only">
+        <div class="field"><label class="req" for="no_vehicle_reason">Reason</label>
+          <input class="input" name="no_vehicle_reason" required placeholder="Loose wheel mount and balance — customer brought the wheel only" id="no_vehicle_reason">
         </div>
         <div class="hint">Only allowed when every line item on this invoice is flagged "no vehicle needed" in the catalog.</div>
         <button class="btn btn--primary btn--block mt4">Record and clear the gate</button>

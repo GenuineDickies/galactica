@@ -7,10 +7,10 @@
   <div class="panel__head"><div class="panel__title">Business</div></div>
   <div class="panel__body">
     <div class="form-grid">
-      <div class="field col-span-2"><label>Legal name</label><input class="input" name="company_name" value="<?= e($get('company_name')) ?>"></div>
-      <div class="field"><label>Phone</label><input class="input" name="company_phone" data-mask="phone" value="<?= e($get('company_phone')) ?>"></div>
-      <div class="field"><label>Email</label><input class="input" name="company_email" value="<?= e($get('company_email')) ?>"></div>
-      <div class="field col-span-2"><label>Address</label><input class="input" name="company_address" value="<?= e($get('company_address')) ?>"></div>
+      <div class="field col-span-2"><label for="company_name">Legal name</label><input class="input" name="company_name" value="<?= e($get('company_name')) ?>" id="company_name"></div>
+      <div class="field"><label for="company_phone">Phone</label><input class="input" name="company_phone" data-mask="phone" value="<?= e($get('company_phone')) ?>" id="company_phone"></div>
+      <div class="field"><label for="company_email">Email</label><input class="input" name="company_email" value="<?= e($get('company_email')) ?>" id="company_email"></div>
+      <div class="field col-span-2"><label for="company_address">Address</label><input class="input" name="company_address" value="<?= e($get('company_address')) ?>" id="company_address"></div>
     </div>
   </div>
 </div>
@@ -20,12 +20,12 @@
     <div class="panel__sub">Tax is applied per line, never as subtotal × rate, and is snapshotted onto each document.</div></div></div>
   <div class="panel__body">
     <div class="form-grid form-grid--3">
-      <div class="field"><label>Tax rate (decimal)</label><input class="input" name="tax_rate" value="<?= e($get('tax_rate', '0')) ?>">
+      <div class="field"><label for="tax_rate">Tax rate (decimal)</label><input class="input" name="tax_rate" value="<?= e($get('tax_rate', '0')) ?>" id="tax_rate">
         <div class="hint">Oregon: 0. Washington: destination-sourced.</div></div>
-      <div class="field"><label>Labour rate / hr</label><input class="input" name="labor_rate" value="<?= e($get('labor_rate')) ?>"></div>
-      <div class="field"><label>Mileage / mi</label><input class="input" name="mileage_rate" value="<?= e($get('mileage_rate')) ?>"></div>
-      <div class="field"><label>Core return window (days)</label>
-        <input class="input" name="core_forfeit_days" type="number" min="1" value="<?= e($get('core_forfeit_days', '30')) ?>">
+      <div class="field"><label for="labor_rate">Labour rate / hr</label><input class="input" name="labor_rate" value="<?= e($get('labor_rate')) ?>" id="labor_rate"></div>
+      <div class="field"><label for="mileage_rate">Mileage / mi</label><input class="input" name="mileage_rate" value="<?= e($get('mileage_rate')) ?>" id="mileage_rate"></div>
+      <div class="field"><label for="core_forfeit_days">Core return window (days)</label>
+        <input class="input" name="core_forfeit_days" type="number" min="1" value="<?= e($get('core_forfeit_days', '30')) ?>" id="core_forfeit_days">
         <div class="hint">How long a customer has to bring the old unit back before the deposit can be
           forfeited. Keep it INSIDE your supplier's own core window — refund after theirs closes and you
           eat the deposit. Nothing forfeits automatically; this only decides what the sweep proposes.</div></div>
@@ -36,13 +36,13 @@
 <div class="panel mb4">
   <div class="panel__head"><div class="panel__title">Document text</div></div>
   <div class="panel__body">
-    <div class="field"><label>Terms printed on invoices</label><textarea class="textarea" name="invoice_terms"><?= e($get('invoice_terms')) ?></textarea></div>
+    <div class="field"><label for="invoice_terms">Terms printed on invoices</label><textarea class="textarea" name="invoice_terms" id="invoice_terms"><?= e($get('invoice_terms')) ?></textarea></div>
     <?php /* Snapshotted onto every estimate at creation — the contract text
              (ORS-relevant). Until 2026-08-27 it was seeded once and editable
              only by raw SQL. Changing it affects new estimates only; issued
              documents keep the terms they were created with. */ ?>
-    <div class="field"><label>Terms printed on estimates (the authorization contract)</label><textarea class="textarea" name="estimate_terms"><?= e($get('estimate_terms')) ?></textarea></div>
-    <div class="field"><label>Footer / disclaimer</label><input class="input" name="invoice_footer" value="<?= e($get('invoice_footer')) ?>"></div>
+    <div class="field"><label for="estimate_terms">Terms printed on estimates (the authorization contract)</label><textarea class="textarea" name="estimate_terms" id="estimate_terms"><?= e($get('estimate_terms')) ?></textarea></div>
+    <div class="field"><label for="invoice_footer">Footer / disclaimer</label><input class="input" name="invoice_footer" value="<?= e($get('invoice_footer')) ?>" id="invoice_footer"></div>
   </div>
 </div>
 
@@ -55,7 +55,7 @@
   </div>
   <div class="panel__body panel__body--flush">
     <table class="tbl">
-      <thead><tr><th>Service</th><th>Driver</th><th>Callback URL</th><th class="right">State</th></tr></thead>
+      <thead><tr><th scope="col">Service</th><th scope="col">Driver</th><th scope="col">Callback URL</th><th class="right" scope="col">State</th></tr></thead>
       <tbody>
       <?php foreach (Integrations::status() as $row): ?>
         <tr>
@@ -70,8 +70,8 @@
   </div>
   <div class="panel__body">
     <div class="field">
-      <label>Public base URL</label>
-      <input class="input" name="app_base_url" value="<?= e($get('app_base_url')) ?>" placeholder="https://admin.wkrllc.com">
+      <label for="app_base_url">Public base URL</label>
+      <input class="input" name="app_base_url" value="<?= e($get('app_base_url')) ?>" placeholder="https://admin.wkrllc.com" id="app_base_url">
       <div class="hint">
         What the providers call back to, and what Square signs its callbacks against — it must match the URL
         registered in the Square dashboard exactly, character for character. Leave blank to guess from the request.
@@ -79,36 +79,36 @@
     </div>
 
     <div class="form-grid form-grid--3">
-      <div class="field"><label>Messaging driver</label>
-        <select class="select" name="driver_sms">
+      <div class="field"><label for="driver_sms">Messaging driver</label>
+        <select class="select" name="driver_sms" id="driver_sms">
           <?php foreach (['outbox' => 'Off — record only, nothing is texted', 'telnyx' => 'Telnyx — live'] as $k => $v): ?>
             <option value="<?= e($k) ?>" <?= Integrations::driver('sms', 'outbox') === $k ? 'selected' : '' ?>><?= e($v) ?></option>
           <?php endforeach; ?>
         </select>
       </div>
-      <div class="field"><label>Payments driver</label>
-        <select class="select" name="driver_payments">
+      <div class="field"><label for="driver_payments">Payments driver</label>
+        <select class="select" name="driver_payments" id="driver_payments">
           <?php foreach (['manual' => 'Manual — till + local checkout', 'square' => 'Square — live'] as $k => $v): ?>
             <option value="<?= e($k) ?>" <?= Integrations::driver('payments', 'manual') === $k ? 'selected' : '' ?>><?= e($v) ?></option>
           <?php endforeach; ?>
         </select>
       </div>
-      <div class="field"><label>Geocoding driver</label>
-        <select class="select" name="driver_geocoder">
+      <div class="field"><label for="driver_geocoder">Geocoding driver</label>
+        <select class="select" name="driver_geocoder" id="driver_geocoder">
           <?php foreach (['osm' => 'OpenStreetMap — free, no key', 'google' => 'Google Maps', 'manual' => 'By hand'] as $k => $v): ?>
             <option value="<?= e($k) ?>" <?= Integrations::driver('geocoder', 'osm') === $k ? 'selected' : '' ?>><?= e($v) ?></option>
           <?php endforeach; ?>
         </select>
       </div>
-      <div class="field"><label>Routing driver</label>
-        <select class="select" name="driver_routes">
+      <div class="field"><label for="driver_routes">Routing driver</label>
+        <select class="select" name="driver_routes" id="driver_routes">
           <?php foreach (['offline' => 'Off — ETA entered by hand', 'google' => 'Google Maps — live drive times'] as $k => $v): ?>
             <option value="<?= e($k) ?>" <?= Integrations::driver('routes', 'offline') === $k ? 'selected' : '' ?>><?= e($v) ?></option>
           <?php endforeach; ?>
         </select>
       </div>
-      <div class="field"><label>Part numbering</label>
-        <select class="select" name="driver_partnum">
+      <div class="field"><label for="driver_partnum">Part numbering</label>
+        <select class="select" name="driver_partnum" id="driver_partnum">
           <?php foreach (['rules' => 'Local rules', 'claude' => 'Claude — assign SKUs'] as $k => $v): ?>
             <option value="<?= e($k) ?>" <?= Integrations::driver('partnum', 'rules') === $k ? 'selected' : '' ?>><?= e($v) ?></option>
           <?php endforeach; ?>
@@ -122,59 +122,59 @@
 
     <div class="tag mb2 mt4">Telnyx — messaging</div>
     <div class="form-grid">
-      <div class="field"><label>Sending number (E.164)</label>
-        <input class="input" name="telnyx_from" value="<?= e($get('telnyx_from')) ?>" placeholder="+15035550100"></div>
-      <div class="field"><label>Messaging profile id</label>
-        <input class="input" name="telnyx_profile_id" value="<?= e($get('telnyx_profile_id')) ?>"></div>
-      <div class="field"><label>API key</label>
+      <div class="field"><label for="telnyx_from">Sending number (E.164)</label>
+        <input class="input" name="telnyx_from" value="<?= e($get('telnyx_from')) ?>" placeholder="+15035550100" id="telnyx_from"></div>
+      <div class="field"><label for="telnyx_profile_id">Messaging profile id</label>
+        <input class="input" name="telnyx_profile_id" value="<?= e($get('telnyx_profile_id')) ?>" id="telnyx_profile_id"></div>
+      <div class="field"><label for="telnyx_api_key">API key</label>
         <input class="input" type="password" name="telnyx_api_key" autocomplete="new-password"
-               placeholder="<?= $get('telnyx_api_key') !== '' ? '•••••••• stored' : 'KEY…' ?>"></div>
-      <div class="field"><label>Webhook public key</label>
+               placeholder="<?= $get('telnyx_api_key') !== '' ? '•••••••• stored' : 'KEY…' ?>" id="telnyx_api_key"></div>
+      <div class="field"><label for="telnyx_public_key">Webhook public key</label>
         <input class="input" type="password" name="telnyx_public_key" autocomplete="new-password"
-               placeholder="<?= $get('telnyx_public_key') !== '' ? '•••••••• stored' : 'base64 Ed25519 key' ?>"></div>
+               placeholder="<?= $get('telnyx_public_key') !== '' ? '•••••••• stored' : 'base64 Ed25519 key' ?>" id="telnyx_public_key"></div>
     </div>
 
     <div class="tag mb2 mt4">Square — card payments</div>
     <div class="form-grid">
-      <div class="field"><label>Location id</label>
-        <input class="input" name="square_location_id" value="<?= e($get('square_location_id')) ?>"></div>
-      <div class="field"><label>Environment</label>
-        <select class="select" name="square_environment">
+      <div class="field"><label for="square_location_id">Location id</label>
+        <input class="input" name="square_location_id" value="<?= e($get('square_location_id')) ?>" id="square_location_id"></div>
+      <div class="field"><label for="square_environment">Environment</label>
+        <select class="select" name="square_environment" id="square_environment">
           <?php foreach (['sandbox' => 'Sandbox', 'production' => 'Production'] as $k => $v): ?>
             <option value="<?= e($k) ?>" <?= $get('square_environment', 'sandbox') === $k ? 'selected' : '' ?>><?= e($v) ?></option>
           <?php endforeach; ?>
         </select>
       </div>
-      <div class="field"><label>Access token</label>
+      <div class="field"><label for="square_access_token">Access token</label>
         <input class="input" type="password" name="square_access_token" autocomplete="new-password"
-               placeholder="<?= $get('square_access_token') !== '' ? '•••••••• stored' : 'EAAA…' ?>"></div>
-      <div class="field"><label>Webhook signature key</label>
+               placeholder="<?= $get('square_access_token') !== '' ? '•••••••• stored' : 'EAAA…' ?>" id="square_access_token"></div>
+      <div class="field"><label for="square_signature_key">Webhook signature key</label>
         <input class="input" type="password" name="square_signature_key" autocomplete="new-password"
-               placeholder="<?= $get('square_signature_key') !== '' ? '•••••••• stored' : 'from the Square dashboard' ?>"></div>
+               placeholder="<?= $get('square_signature_key') !== '' ? '•••••••• stored' : 'from the Square dashboard' ?>" id="square_signature_key"></div>
     </div>
 
     <div class="tag mb2 mt4">Google — geocoding &amp; routing</div>
     <div class="field">
-      <label>Maps API key</label>
+      <label for="google_maps_key">Maps API key</label>
       <input class="input" type="password" name="google_maps_key" autocomplete="new-password"
-             placeholder="<?= $get('google_maps_key') !== '' ? '•••••••• stored' : 'optional' ?>">
+             placeholder="<?= $get('google_maps_key') !== '' ? '•••••••• stored' : 'optional' ?>" id="google_maps_key">
       <div class="hint">One key serves both. Geocoding uses the Geocoding API; live drive times need the
         <strong>Routes API</strong> also enabled on this key in the Google Cloud console.</div>
     </div>
 
     <div class="tag mb2 mt4">Claude — part numbering</div>
     <div class="form-grid">
-      <div class="field"><label>Anthropic API key</label>
+      <div class="field"><label for="anthropic_api_key">Anthropic API key</label>
         <input class="input" type="password" name="anthropic_api_key" autocomplete="new-password"
-               placeholder="<?= $get('anthropic_api_key') !== '' ? '•••••••• stored' : 'sk-ant-…' ?>"></div>
-      <div class="field"><label>Model</label>
+               placeholder="<?= $get('anthropic_api_key') !== '' ? '•••••••• stored' : 'sk-ant-…' ?>" id="anthropic_api_key"></div>
+      <div class="field"><label for="anthropic_model">Model</label>
         <input class="input" name="anthropic_model" value="<?= e($get('anthropic_model')) ?>"
-               placeholder="claude-haiku-4-5-20251001"></div>
+               placeholder="claude-haiku-4-5-20251001" id="anthropic_model"></div>
     </div>
     <div class="field">
-      <label>Numbering rules</label>
+      <label for="partnum_rules">Numbering rules</label>
       <textarea class="textarea" name="partnum_rules" rows="7"
-        placeholder="<?= e(PartNumbers::DEFAULT_RULES) ?>"><?= e($get('partnum_rules')) ?></textarea>
+        placeholder="<?= e(PartNumbers::DEFAULT_RULES) ?>" id="partnum_rules"><?= e($get('partnum_rules')) ?></textarea>
       <div class="hint">
         Sent to Claude with the list of existing part numbers whenever a new catalog item is added, so it
         assigns a code in your house style. Leave the driver on <span class="docno">Local rules</span> and the
@@ -182,7 +182,7 @@
       </div>
     </div>
 
-    <div class="alert alert--info mb0">
+    <div class="alert alert--info mb0" role="status">
       <div>
         Credential fields are write-only: leave one blank and the stored value is kept, so saving this page
         cannot disconnect an integration by accident. Type a single <span class="docno">-</span> to clear one

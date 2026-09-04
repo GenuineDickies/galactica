@@ -7,11 +7,11 @@
       <?php if (!$history): ?><div class="empty"><div class="empty__title">No service history</div>
         <div class="empty__body">This vehicle has not been worked on yet.</div></div>
       <?php else: ?>
-        <table class="tbl"><thead><tr><th>Status</th><th>Estimate</th><th>Service</th><th class="right">Total</th><th class="right">When</th></tr></thead><tbody>
+        <table class="tbl"><thead><tr><th scope="col">Status</th><th scope="col">Estimate</th><th scope="col">Service</th><th class="right" scope="col">Total</th><th class="right" scope="col">When</th></tr></thead><tbody>
         <?php foreach ($history as $r): ?>
           <tr data-href="<?= url('estimates/' . $r['id']) ?>">
             <td><?= badge($r['status']) ?></td>
-            <td class="docno"><?= e($r['doc_number']) ?><div class="text-sm faint"><?= e($r['sr_no']) ?></div></td>
+            <td class="docno"><a class="row-link" href="<?= url('estimates/' . $r['id']) ?>"><?= e($r['doc_number']) ?><div class="text-sm faint"><?= e($r['sr_no']) ?></div></a></td>
             <td><?= e(service_type_label($r['service_type'])) ?></td>
             <td class="right num"><?= money($r['total']) ?></td>
             <td class="right muted text-sm nowrap"><?= e(fdate($r['created_at'])) ?></td></tr>

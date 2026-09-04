@@ -37,7 +37,7 @@
     </div>
   </div>
   <div class="row">
-    <input class="input" id="manual_find" type="search" placeholder="Find in the manual…"
+    <input class="input" id="manual_find" type="search" aria-label="Find in the manual" placeholder="Find in the manual…"
            style="min-width:220px" autocomplete="off">
     <a class="btn btn--ghost" href="<?= url('manual/print') ?>" target="_blank" rel="noopener">
       Print or save as PDF

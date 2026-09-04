@@ -61,7 +61,10 @@ final class CheckoutController
             'processor'     => 'local-checkout',
             'processor_ref' => 'LOCAL-' . $link['order_id'],
             'reference'     => (string) $link['order_id'],
-            'tip'           => max(0.0, num('tip_amount')),
+            // The page offers fixed tip amounts; the server accepts only those.
+            // Anything else — including a number typed into a crafted request —
+            // is no tip, never a phantom cash receipt in the books.
+            'tip'           => in_array(num('tip_amount'), [0.0, 5.0, 10.0, 20.0], true) ? num('tip_amount') : 0.0,
             'note'          => 'Paid on the checkout page',
         ]);
 

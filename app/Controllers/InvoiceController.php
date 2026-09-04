@@ -301,6 +301,7 @@ final class InvoiceController
 
     public static function find(int $id): array
     {
+        Auth::require();   // before the lookup: a guest learns nothing from 404-vs-redirect
         $i = Db::one('SELECT * FROM invoices WHERE id = ?', [$id]);
         if (!$i) { http_response_code(404); View::render('pages/404', ['title' => 'Not found']); exit; }
         return $i;

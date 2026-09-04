@@ -9,14 +9,17 @@
 <link rel="stylesheet" href="<?= asset('assets/css/app.css') ?>">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%232c5cff'/><text x='16' y='22' font-size='15' font-family='sans-serif' font-weight='bold' fill='white' text-anchor='middle'>WK</text></svg>">
 </head>
-<body>
+<body class="<?= Auth::role() === 'TECHNICIAN' ? 'is-tech' : '' ?>">
+<a class="skip-link" href="#main">Skip to content</a>
 <div class="shell">
   <?php View::partial('partials/sidebar', ['nav' => $nav ?? '']); ?>
   <div class="main">
     <header class="topbar">
       <div>
         <?php if (!empty($crumb)): ?><div class="topbar__crumb"><?= e($crumb) ?></div><?php endif; ?>
-        <div class="topbar__title"><?= e($title ?? '') ?></div>
+        <?php /* The page heading. PJAX moves focus here after every swap, so a
+                 screen reader hears the new page name instead of nothing. */ ?>
+        <h1 class="topbar__title" tabindex="-1"><?= e($title ?? '') ?></h1>
       </div>
       <div class="topbar__spacer"></div>
       <?php if (!empty($headActions)) echo $headActions; ?>
@@ -34,8 +37,8 @@
              made to a customer — not discovered afterwards on a log page. Only
              staff who can act on it (or must route around it) see the banner. */ ?>
     <?php if (Auth::is('ADMIN', 'DISPATCH') && ($health = Health::all())): ?>
-      <div style="padding:16px 24px 0">
-        <div class="alert alert--danger mb0"><div>
+      <div style="padding:16px 24px 0" role="status">
+        <div class="alert alert--danger mb0" role="status"><div>
           <strong>Stop — customers cannot be reached until this is fixed.</strong>
           <?php foreach ($health as $service => $issues): ?>
             <?php foreach ($issues as $h): ?>
@@ -49,17 +52,22 @@
         </div></div>
       </div>
     <?php endif; ?>
-    <main class="content"><?= $content ?></main>
+    <main id="main" class="content" tabindex="-1"><?= $content ?></main>
     <footer class="text-xs faint" style="text-align:center;padding:10px 16px 16px">&copy; <?= date('Y') ?> White Knight Roadside, LLC. All Rights Reserved.</footer>
   </div>
 </div>
 
-<div class="flashwrap">
+<?php /* Flashes are the only feedback many actions give. The wrapper is a
+         polite live region so they are read out; app.js adds a Dismiss
+         button and pauses the auto-dismiss while hovered or focused. */ ?>
+<div class="flashwrap" role="status" aria-live="polite" aria-atomic="true">
 <?php foreach (flash() as $f):
   $cls = ['ok'=>'alert--ok','warn'=>'alert--warn','err'=>'alert--danger','info'=>'alert--info'][$f['type']] ?? 'alert--info'; ?>
   <div class="alert flash <?= $cls ?>"><div><?= $f['msg'] ?></div></div>
 <?php endforeach; ?>
 </div>
+<?php /* Announces in-place navigation ("Loaded: Work Orders"). */ ?>
+<div id="live" class="sr-only" aria-live="polite" aria-atomic="true"></div>
 
 <script src="<?= asset('assets/js/app.js') ?>"></script>
 </body>

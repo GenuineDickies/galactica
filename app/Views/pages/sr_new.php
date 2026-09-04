@@ -17,8 +17,8 @@
     <div class="panel__body">
       <div class="form-grid">
         <div class="field">
-          <label>How did it come in</label>
-          <select class="select" name="channel">
+          <label for="channel">How did it come in</label>
+          <select class="select" name="channel" id="channel">
             <option value="PHONE">Phone call</option>
             <option value="WEB">Website form</option>
             <option value="SMS">Text message</option>
@@ -28,8 +28,8 @@
           <div class="hint">Electronic requests will land here automatically once a provider feed is wired up.</div>
         </div>
         <div class="field">
-          <label>Job source</label>
-          <select class="select" name="job_source" data-job-source>
+          <label for="job_source">Job source</label>
+          <select class="select" name="job_source" data-job-source id="job_source">
             <option value="RETAIL">Retail — direct customer</option>
             <option value="PROVIDER">Provider / bulk referral</option>
           </select>
@@ -40,13 +40,13 @@
                  Hiding is presentation; Rules::providerLink is what actually
                  keeps a retail request from carrying a claim number. */ ?>
         <div class="field hide" data-when-source="PROVIDER">
-          <label>Provider account</label>
-          <select class="select" name="provider_id">
+          <label for="provider_id">Provider account</label>
+          <select class="select" name="provider_id" id="provider_id">
             <option value="">—</option>
             <?php foreach ($providers as $p): ?><option value="<?= (int) $p['id'] ?>"><?= e($p['company']) ?></option><?php endforeach; ?>
           </select>
         </div>
-        <div class="field hide" data-when-source="PROVIDER"><label>Provider claim / PO ref</label><input class="input" name="provider_ref" placeholder="CMC-884120"></div>
+        <div class="field hide" data-when-source="PROVIDER"><label for="provider_ref">Provider claim / PO ref</label><input class="input" name="provider_ref" placeholder="CMC-884120" id="provider_ref"></div>
       </div>
     </div>
   </div>
@@ -60,9 +60,9 @@
     </div>
     <div class="panel__body">
       <div class="form-grid">
-        <div class="field"><label>Name as given</label><input class="input" name="reported_name" placeholder="Marcus Webb"></div>
-        <div class="field"><label>Callback number</label>
-          <input class="input" name="reported_phone" data-mask="phone" placeholder="(503) 555-0123">
+        <div class="field"><label for="reported_name">Name as given</label><input class="input" name="reported_name" placeholder="Marcus Webb" id="reported_name"></div>
+        <div class="field"><label for="reported_phone">Callback number</label>
+          <input class="input" name="reported_phone" data-mask="phone" placeholder="(503) 555-0123" id="reported_phone">
           <div class="hint">Displayed as (xxx) xxx-xxxx. Stored as E.164 when it parses.</div>
         </div>
       </div>
@@ -86,7 +86,7 @@
                  Deciding the kit first turns the second question into a short
                  list of jobs that kit can actually do. */ ?>
         <div class="field">
-          <label>Roll as</label>
+          <label for="service_category">Roll as</label>
           <select class="select" name="service_category" id="service_category"
                   data-service-types="<?= e(json_encode(service_types_by_category())) ?>">
             <?php foreach (service_categories() as $k => $v): ?>
@@ -98,7 +98,7 @@
             an internal patch or a delivery needs the bead broken and rides with the tire kit.</div>
         </div>
         <div class="field">
-          <label>Probably this service</label>
+          <label for="nature_of_service">Probably this service</label>
           <?php /* Rendered for the default category and rebuilt client-side as
                    the category changes. The eligibility comes from
                    ServiceCategory either way, and the server re-coerces the
@@ -112,8 +112,8 @@
             the estimate decides what the work actually is.</div>
         </div>
         <div class="field">
-          <label>Priority</label>
-          <select class="select" name="priority">
+          <label for="priority">Priority</label>
+          <select class="select" name="priority" id="priority">
             <option value="EMERGENCY">Emergency</option>
             <option value="URGENT">Urgent</option>
             <option value="STANDARD" selected>Standard</option>
@@ -121,14 +121,14 @@
           </select>
         </div>
         <div class="field">
-          <label>ETA quoted to caller <span class="faint">(optional)</span></label>
-          <input class="input" name="promised_eta_time" type="time" step="900">
+          <label for="promised_eta_time">ETA quoted to caller <span class="faint">(optional)</span></label>
+          <input class="input" name="promised_eta_time" type="time" step="900" id="promised_eta_time">
           <div class="hint">Only if you actually told them a time — quarter-hour times.
             Blank records no promise. A time already past means tomorrow.</div>
         </div>
       </div>
-      <div class="field mb0"><label>The problem in their words</label>
-        <textarea class="textarea" name="reported_problem" placeholder="Car won't start, clicks when I turn the key. Battery light was on yesterday."></textarea>
+      <div class="field mb0"><label for="reported_problem">The problem in their words</label>
+        <textarea class="textarea" name="reported_problem" placeholder="Car won't start, clicks when I turn the key. Battery light was on yesterday." id="reported_problem"></textarea>
       </div>
 
       <div class="mt4" data-when-service="LOCKOUT">
@@ -136,7 +136,7 @@
           <input type="checkbox" id="occupant_inside" name="occupant_inside" value="1">
           <span>A child or pet is inside the vehicle</span>
         </label>
-        <div id="occupant_note" class="alert alert--danger hide">
+        <div id="occupant_note" class="alert alert--danger hide" role="status">
           <div><strong>Escalate to emergency.</strong> Advise the caller to contact 911 or the fire department immediately if anyone inside is in distress. Do not delay the call for a quote.</div>
         </div>
       </div>
@@ -159,13 +159,13 @@
     </div>
     <div class="panel__body">
       <div class="form-grid form-grid--3" data-vehicle-picker data-vehicle-endpoint="<?= url('vehicles/options') ?>">
-        <div class="field"><label>Year</label><input class="input" name="v_year" type="number" min="1900" max="<?= date('Y') + 1 ?>" data-veh="year"></div>
-        <div class="field"><label>Make</label><input class="input" name="v_make" data-veh="make"></div>
-        <div class="field"><label>Model</label><input class="input" name="v_model" data-veh="model"></div>
-        <div class="field"><label>Colour</label><input class="input" name="v_color"></div>
-        <div class="field"><label>Plate</label><input class="input" name="v_plate" style="text-transform:uppercase"></div>
-        <div class="field"><label>Plate state</label>
-          <select class="select" name="v_plate_state">
+        <div class="field"><label for="v_year">Year</label><input class="input" name="v_year" type="number" min="1900" max="<?= date('Y') + 1 ?>" data-veh="year" id="v_year"></div>
+        <div class="field"><label for="v_make">Make</label><input class="input" name="v_make" data-veh="make" id="v_make"></div>
+        <div class="field"><label for="v_model">Model</label><input class="input" name="v_model" data-veh="model" id="v_model"></div>
+        <div class="field"><label for="v_color">Colour</label><input class="input" name="v_color" id="v_color"></div>
+        <div class="field"><label for="v_plate">Plate</label><input class="input" name="v_plate" style="text-transform:uppercase" id="v_plate"></div>
+        <div class="field"><label for="v_plate_state">Plate state</label>
+          <select class="select" name="v_plate_state" id="v_plate_state">
             <option value="">—</option>
             <?php foreach (us_states() as $s): ?><option <?= $s === 'OR' ? 'selected' : '' ?>><?= e($s) ?></option><?php endforeach; ?>
           </select>
@@ -191,28 +191,28 @@
                the first and can never become the second, which is why they are
                separate fields rather than one box that means whichever. */ ?>
       <div class="form-grid">
-        <div class="field col-span-full"><label>Where they say they are</label>
-          <input class="input" name="reported_location" placeholder="I-84 EB near Exit 9, blue sedan on the shoulder">
+        <div class="field col-span-full"><label for="reported_location">Where they say they are</label>
+          <input class="input" name="reported_location" placeholder="I-84 EB near Exit 9, blue sedan on the shoulder" id="reported_location">
           <div class="hint">Their words. Kept exactly as heard — a description of a place, not an address.</div>
         </div>
       </div>
 
       <div class="tag mb2 mt4">— the address —</div>
       <div class="form-grid">
-        <div class="field col-span-full"><label>Street address, or nearest address</label>
-          <input class="input" name="nearest_address" placeholder="1220 NW Everett St" autocomplete="off">
+        <div class="field col-span-full"><label for="nearest_address">Street address, or nearest address</label>
+          <input class="input" name="nearest_address" placeholder="1220 NW Everett St" autocomplete="off" id="nearest_address">
           <div class="hint">Works for both: the address the job is <em>at</em> when there is one, or the
             nearest address to a vehicle on a shoulder. Number, street, city and state — no ZIP needed.
             Drop a pin below and this fills itself in.</div>
         </div>
-        <div class="field"><label>City</label><input class="input" name="city"></div>
-        <div class="field"><label>State</label>
-          <select class="select" name="state">
+        <div class="field"><label for="city">City</label><input class="input" name="city" id="city"></div>
+        <div class="field"><label for="state">State</label>
+          <select class="select" name="state" id="state">
             <?php foreach (us_states() as $s): ?><option <?= $s === 'OR' ? 'selected' : '' ?>><?= e($s) ?></option><?php endforeach; ?>
           </select>
         </div>
-        <div class="field"><label>ZIP <span class="faint">(optional)</span></label>
-          <input class="input" name="postal_code" maxlength="10"></div>
+        <div class="field"><label for="postal_code">ZIP <span class="faint">(optional)</span></label>
+          <input class="input" name="postal_code" maxlength="10" id="postal_code"></div>
       </div>
       <?php /* Two ways to get a position, and they are not interchangeable.
                The location link asks the CUSTOMER'S phone, which is the better
@@ -260,7 +260,7 @@
   <div class="panel">
     <div class="panel__head"><div class="panel__title">Dispatcher notes</div></div>
     <div class="panel__body">
-      <textarea class="textarea" name="intake_notes" placeholder="Internal only — never printed on customer documents."></textarea>
+      <textarea class="textarea" name="intake_notes" aria-label="Dispatcher notes" placeholder="Internal only — never printed on customer documents."></textarea>
     </div>
     <div class="panel__foot" style="display:block">
       <button class="btn btn--primary btn--block" type="submit">Log service request</button>
