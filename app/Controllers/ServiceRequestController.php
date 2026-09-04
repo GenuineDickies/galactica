@@ -26,6 +26,13 @@ final class ServiceRequestController
 {
     public const STATUSES = ['PENDING', 'ACCEPTED', 'COMPLETED', 'CANCELLED', 'REJECTED'];
 
+    /** Who is acting, for consent evidence lines. */
+    private static function actorName(): string
+    {
+        $u = Auth::user();
+        return $u ? trim(($u['first_name'] ?? '') . ' ' . ($u['last_name'] ?? '')) : 'system';
+    }
+
     public static function index(): void
     {
         Auth::requireRole('ADMIN', 'DISPATCH');
@@ -138,6 +145,10 @@ final class ServiceRequestController
         ]);
 
         Audit::log('service_request', $id, 'created', 'Intake via ' . input('channel', 'PHONE'));
+
+        // The consent box is consent: bring a matching customer record into
+        // agreement so the request gate and the customer gate say the same thing.
+        Consent::grantAtIntake(Db::one('SELECT * FROM service_requests WHERE id = ?', [$id]), self::actorName());
 
         /* Audited separately from the intake itself, and named for what it is.
          * A position on a job is evidence; whoever reads this later needs to
@@ -290,6 +301,7 @@ final class ServiceRequestController
         $upd['updated_at'] = now();
         Db::update('service_requests', $id, $upd);
         Audit::log('service_request', $id, 'details:updated', implode('; ', $changes));
+        Consent::grantAtIntake(Db::one('SELECT * FROM service_requests WHERE id = ?', [$id]), self::actorName());
 
         flash('Details updated. Every change is on the audit trail below.', 'ok');
         redirect('/service-requests/' . $id);

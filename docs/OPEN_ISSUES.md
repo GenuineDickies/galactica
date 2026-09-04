@@ -108,8 +108,10 @@ Decisions needing a human (CPA / attorney / Jason):
 
 ## Closed
 
+- [x] Consent sync (follow-on to C1) · 2026-09-04 · Intake box re-opts a matching customer in (`Consent::grantAtIntake`, wired into SR create/update); DECISIONS + BUSINESS_RULES §11 updated; 11 more assertions (159/159).
+
 - [x] F1 · 2026-09-04 · 2026-09-03 security/a11y/design pass (commit 6283a6f, 63 files) plus the C1–C3 STOP fixes deployed to galactica.wkrllc.com via `data/deploy.php` (index.php last). Verified: md5 of all 63 files identical on the server over SSH, `php -l` clean on the server, /login renders in a browser (scripted clients get a WAF 403 — host behaviour, not the app).
 
-- [x] C1, C2, C3, C12 · 2026-09-04 · STOP handling: `Consent::revokeRequests()` clears intake consent on open requests (SMS and verbal paths, with or without a customer record); `Sms::queueForRequest()` honours customer `do_not_contact`; `keyword()` matches two-word FCC phrases (OPT OUT, STOP ALL, CANCEL SUBSCRIPTION, OPT IN); `msg_index` copy corrected; 40 new assertions in `tests/sms_delivery.php` (148/148). Docs: INTEGRATIONS.md keyword table, 10DLC audit resolution notes. Commit: pending.
+- [x] C1, C2, C3, C12 · 2026-09-04 · STOP handling: `Consent::revokeRequests()` clears intake consent on open requests (SMS and verbal paths, with or without a customer record); `Sms::queueForRequest()` honours customer `do_not_contact`; `keyword()` matches two-word FCC phrases (OPT OUT, STOP ALL, CANCEL SUBSCRIPTION, OPT IN); `msg_index` copy corrected; 40 new assertions in `tests/sms_delivery.php` (148/148). Docs: INTEGRATIONS.md keyword table, 10DLC audit resolution notes. Commit 0a14970.
 
 - [x] A13 · 2026-09-03 · Card-data spreadsheets scrubbed: local `Downloads` copies reduced to last-4 (Honk: number/cvc2/exp_date columns deleted; Urgently: 965 PANs → last4) by Claude via Excel; Drive copies edited by Jason. Drive version history may still hold the pre-edit versions — Manage versions → delete old version, then empty Trash. No commit (not code).

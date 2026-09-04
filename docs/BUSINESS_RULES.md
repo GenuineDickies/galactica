@@ -354,6 +354,15 @@ NO message row — nothing is ever recorded as a text that was not a text. (An
 earlier version fed a pretend inbound SMS through the webhook handler; that was
 a fabricated record and was replaced.)
 
+**A texted STOP reaches the request too, and the intake box reaches the
+customer.** `Consent::optOut()` clears intake consent on every open request
+carrying the number (compared after E.164 normalisation), with or without a
+customer record. `Consent::grantAtIntake()` runs on every intake save: if the
+box is ticked and a customer exists on that number who is not currently
+consenting, they are opted in as `verbal_at_intake` with an audit row naming
+the request and the dispatcher. See DECISIONS "The intake consent box is
+consent, both ways".
+
 ## 12. Money is written once
 
 Idempotency keys are generated on the server before any processor call, never by

@@ -1406,6 +1406,31 @@ final class Consent
         return $n;
     }
 
+    /**
+     * The intake consent box IS consent (decision 2026-09-04). When a
+     * dispatcher ticks it, the caller has just said yes on the phone — a
+     * fresh verbal opt-in, valid under TCPA even after an earlier STOP. So
+     * the customer record on that number, linked or merely matching, is
+     * brought into agreement: sms_approved on, do_not_contact off, source
+     * verbal_at_intake, audited with who ticked it and on which request.
+     * Idempotent — a customer already consenting is left untouched and
+     * nothing is written. Returns the customer id changed, or null.
+     */
+    public static function grantAtIntake(array $sr, string $by): ?int
+    {
+        if ((int) ($sr['comms_consent'] ?? 0) !== 1) { return null; }
+        $e164 = phone_to_e164((string) ($sr['reported_phone'] ?? ''));
+        $cust = !empty($sr['customer_id'])
+            ? Db::one('SELECT * FROM customers WHERE id = ?', [(int) $sr['customer_id']])
+            : null;
+        if (!$cust && $e164) { $cust = Db::one('SELECT * FROM customers WHERE phone_e164 = ?', [$e164]); }
+        if (!$cust) { return null; }
+        if ((int) $cust['sms_approved'] === 1 && (int) $cust['do_not_contact'] === 0) { return null; }
+        self::optIn($cust, 'verbal_at_intake',
+            'VERBAL consent ticked at intake on ' . ($sr['doc_number'] ?? 'request') . ' by ' . $by);
+        return (int) $cust['id'];
+    }
+
     /** Restore. Only ever from an affirmative act by the customer. */
     public static function optIn(array $cust, string $source, string $how): void
     {
@@ -1630,17 +1655,18 @@ final class Sms
         } elseif ($phone === '') {
             $gate = ['ok' => false, 'reason' => 'The callback number is not a valid 10-digit phone number.'];
         } else {
-            // Intake consent is necessary, not sufficient. If a customer record
-            // exists for this number — linked or merely sharing the phone — its
-            // flags are consulted too and the stricter answer wins. Otherwise a
-            // STOP recorded on the customer could be undone by re-ticking the
-            // intake box (10DLC audit P1-A).
+            // The two consent records normally agree: ticking the intake box
+            // re-opts the customer in (Consent::grantAtIntake) and a STOP clears
+            // the request (Consent::revokeRequests). This check is for when they
+            // do not — a STOP that arrived after the request was ticked, or data
+            // from before both existed. The customer's opt-out wins (10DLC P1-A);
+            // asking the caller again and saving the request re-grants it.
             $cust = $sr['customer_id']
                 ? Db::one('SELECT * FROM customers WHERE id = ?', [(int) $sr['customer_id']])
                 : null;
             $cust = $cust ?: Db::one('SELECT * FROM customers WHERE phone_e164 = ?', [$phone]);
             if ($cust && (int) $cust['do_not_contact'] === 1) {
-                $gate = ['ok' => false, 'reason' => 'Customer is marked do-not-contact — they opted out. Intake consent does not override that.'];
+                $gate = ['ok' => false, 'reason' => 'Customer opted out of texts after this request was taken. If they say yes now, re-save the request with the consent box ticked.'];
             }
         }
 

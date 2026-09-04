@@ -499,7 +499,7 @@ section('after STOP, queueForRequest is blocked even if intake consent were re-t
 Db::update('service_requests', $srA, ['comms_consent' => 1]);
 $after = Sms::queueForRequest(Db::one('SELECT * FROM service_requests WHERE id=?', [$srA]), 'locate', ['{link}' => 'x']);
 check('blocked by the customer gate',           $after['ok'], false);
-check('reason names do-not-contact',            str_contains($after['reason'], 'do-not-contact'), true);
+check('reason says they opted out',             str_contains($after['reason'], 'opted out'), true);
 $row = Db::one("SELECT * FROM messages WHERE service_request_id = ? ORDER BY id DESC LIMIT 1", [$srA]);
 check('attempt recorded as BLOCKED',            $row['status'] ?? null, 'BLOCKED');
 
@@ -520,9 +520,38 @@ check('recorded as a stop keyword',             Db::val("SELECT template FROM me
 $blocked = Sms::queueForRequest(Db::one('SELECT * FROM service_requests WHERE id=?', [$srC]), 'locate', ['{link}' => 'x']);
 check('request text now blocked',               $blocked['ok'], false);
 
-Db::q("DELETE FROM audit_log WHERE (entity_type='customer' AND entity_id=?) OR (entity_type='service_request' AND entity_id IN (?,?,?))", [$custId, $srA, $srB, $srC]);
+/* ------------------------------------------------------------------ */
+/* The intake box IS consent: a fresh verbal yes re-opts a STOPped customer */
+/* ------------------------------------------------------------------ */
+section('ticking intake consent for a number with a prior STOP re-opts the customer in');
+// $custId is do_not_contact after the STOP above. A new call comes in, the
+// dispatcher asks, the caller says yes, the box is ticked.
+$srD = Db::insert('service_requests', [
+    'doc_number' => 'TEST-STOP-D', 'reported_name' => 'Stop Test', 'reported_phone' => '503-555-0166',
+    'comms_consent' => 1, 'created_at' => now(), 'updated_at' => now(),
+]);
+$granted = Consent::grantAtIntake(Db::one('SELECT * FROM service_requests WHERE id=?', [$srD]), 'Test Runner');
+check('grant reports the customer it touched', $granted, $custId);
+$c = Db::one('SELECT * FROM customers WHERE id = ?', [$custId]);
+check('sms_approved restored',                  (int) $c['sms_approved'], 1);
+check('do_not_contact cleared',                 (int) $c['do_not_contact'], 0);
+check('source is verbal_at_intake',             $c['sms_consent_source'], 'verbal_at_intake');
+$aud = Db::one("SELECT * FROM audit_log WHERE entity_type='customer' AND entity_id=? AND action='sms:opted_in' ORDER BY id DESC LIMIT 1", [$custId]);
+check('opt-in audited and names the request',   str_contains((string) ($aud['detail'] ?? ''), 'TEST-STOP-D'), true);
+check('opt-in audit names who ticked it',       str_contains((string) ($aud['detail'] ?? ''), 'Test Runner'), true);
+$ok = Sms::queueForRequest(Db::one('SELECT * FROM service_requests WHERE id=?', [$srD]), 'locate', ['{link}' => 'x']);
+check('request text allowed again',             $ok['ok'], true);
+
+section('grantAtIntake is a no-op when there is nothing to grant');
+check('box not ticked -> nothing',              Consent::grantAtIntake(['reported_phone' => $ph, 'comms_consent' => 0, 'doc_number' => 'X', 'customer_id' => null], 'T'), null);
+check('no customer on the number -> nothing',   Consent::grantAtIntake(['reported_phone' => '+15035550188', 'comms_consent' => 1, 'doc_number' => 'X', 'customer_id' => null], 'T'), null);
+$audBefore = (int) Db::val("SELECT COUNT(*) FROM audit_log WHERE entity_type='customer' AND entity_id=?", [$custId]);
+check('already consenting -> no change',        Consent::grantAtIntake(Db::one('SELECT * FROM service_requests WHERE id=?', [$srD]), 'T'), null);
+check('…and no duplicate audit row',            (int) Db::val("SELECT COUNT(*) FROM audit_log WHERE entity_type='customer' AND entity_id=?", [$custId]), $audBefore);
+
+Db::q("DELETE FROM audit_log WHERE (entity_type='customer' AND entity_id=?) OR (entity_type='service_request' AND entity_id IN (?,?,?,?))", [$custId, $srA, $srB, $srC, $srD]);
 Db::q("DELETE FROM messages WHERE phone_e164 IN (?,?)", [$ph, $ph2]);
-Db::q("DELETE FROM service_requests WHERE id IN (?,?,?)", [$srA, $srB, $srC]);
+Db::q("DELETE FROM service_requests WHERE id IN (?,?,?,?)", [$srA, $srB, $srC, $srD]);
 Db::q('DELETE FROM customers WHERE id = ?', [$custId]);
 
 Db::q('DELETE FROM messages WHERE provider_ref = ?', [$ref]);

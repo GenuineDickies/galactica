@@ -214,6 +214,23 @@ not worth it, and a customer who wants back in can text START. Consent is
 restored with a fresh timestamp and a new source, so the record shows exactly
 what happened and when.
 
+## The intake consent box is consent, both ways
+
+**Chosen 2026-09-04.** There is one consent, not two. A texted or verbal STOP
+clears the customer's flags *and* intake consent on every open request for that
+number (`Consent::revokeRequests`). Ticking the intake box — "the caller just
+said yes" — sets intake consent *and* re-opts a matching customer record in
+(`Consent::grantAtIntake`: `sms_approved`, `do_not_contact` off, source
+`verbal_at_intake`, audited with who ticked it and on which request), even
+after an earlier STOP. A fresh verbal yes is valid consent under the TCPA; the
+alternative — making a stranded caller text START before we can send them the
+location link — was judged worse for the customer for no compliance gain.
+
+The residual check in `Sms::queueForRequest` (refuse when the customer is
+do-not-contact) is for the two records disagreeing: a STOP that arrived after
+the request was ticked, or data from before both routines existed. Re-saving
+the request with the box ticked, after asking again, re-grants.
+
 ## Catalog-only line items
 
 **Chosen.** No free-text rows anywhere.
